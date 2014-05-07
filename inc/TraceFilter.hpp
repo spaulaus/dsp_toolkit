@@ -1,0 +1,68 @@
+/** \file TraceFilter.hpp
+ *  \brief A class to perform trapezoidal filtering
+ *  \author S. V. Paulauskas
+ *  \date 23 April 2014
+ */
+#ifndef __TRACEFILTER_HPP__
+#define __TRACEFILTER_HPP__
+#include <vector>
+#include <utility>
+
+/*! The class to hold the Filter parameters */
+class FilterParameters {
+public:
+    FilterParameters(){};
+    FilterParameters(const double &l, const double &g, const double &tau);
+    FilterParameters(const double &l, const double &g, const unsigned int &thresh);
+    ~FilterParameters(){};
+
+    double GetFlattop(void){return(g_);};
+    double GetRisetime(void){return(l_);};
+    double GetTau(void){return(tau_);};
+    double GetThreshold(void){return(thresh_);};
+
+    void SetFlattop(const double &a){g_ = a;};
+    void SetRisetime(const double &a){l_ = a;};
+    void SetTau(const double &a){tau_ = a;};
+    void SetThreshold(const double &a){thresh_ = a;};
+private:
+    double g_, l_, tau_, tau1_, tau_2, thresh_;
+};
+
+/*! The class to perform the filtering */
+class TraceFilter {
+public:
+    TraceFilter(){};
+    TraceFilter(const int &adcSample){adc_ = adcSample;};
+    TraceFilter(const unsigned int &adc, 
+                const FilterParameters &tFilt, const FilterParameters &eFilt);
+    ~TraceFilter(){};
+
+    double GetAdcSample(void){return(adc_);};
+    double GetBaseline(void){return(baseline_);};
+    double GetEnergy(void){return(energy_);};
+
+    void CalcFilters(const std::vector<double> *sig);
+    
+    void SetAdcSample(const double &a){adc_ = a;};
+    void SetSig(const std::vector<double> *sig){sig_ = sig;};
+    void SetVerbose(const bool &a){loud_ = a;};
+private:
+    bool loud_;
+    unsigned int adc_, trigPos_;
+    double baseline_, energy_;
+
+    FilterParameters e_, t_;
+    
+    const std::vector<double> *sig_;
+    std::vector<double> coeffs_;
+    std::vector<unsigned int> limits_, trigFilter_;
+
+    void CalcBaseline(void); 
+    void CalcEnergyFilterLimits(void);
+    void CalcEnergyFilterCoeffs(void);
+    void CalcEnergyFilter(void);
+    void CalcTriggerFilter(void);
+    void ConvertToClockticks(void);
+};
+#endif //__TRACEFILTER_HPP__

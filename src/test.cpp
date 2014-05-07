@@ -5,49 +5,59 @@
 
 #include <SignalGenerator.hpp>
 
-#include "EnergyFilter.hpp"
+#include "TraceFilter.hpp"
 
 using namespace std;
-
-vector<double> TrapFilter(const double &L, const double &G, 
-                          const vector<double> &sig);
 
 int main(int argc, char* argv[]) {
     unsigned int seed = 
         chrono::system_clock::now().time_since_epoch().count();
     mt19937_64 twist (seed);
     uniform_real_distribution<double> mult(0.0,1.0);
-    lognormal_distribution<double> amps(4096, 5.0);
+    normal_distribution<double> amps(4096, 5.0);
 
     ofstream output("out.dat");
     
-    //time here in clockticks (energy filter)
+    // Sampling frequency
     double adc = 100;
-    double L = 0.2*adc, G = 0.01*adc, tau = 0.01*adc;
-    double len = 2*L+G;
+    // times here in us
+    double tl = 0.2, tg = 0.01;
+    unsigned int thresh = 6;
+    double el = 0.2, eg = 0.01, tau = 0.01;
 
-    EnergyFilter filter(L, G, tau);
+    //experiment values
+    // double tl = 0.2, tg = 0.03;
+    // unsigned int thresh = 6;
+    // double el = 0.6, eg = 0.24, tau = 0.9;
+
+    double len = 2*(el*adc)+(eg*adc);
+
+    FilterParameters trigger(tl,tg, thresh);
+    FilterParameters energy(el,eg,tau);
+    TraceFilter filter(adc , trigger, energy);
+    //filter.SetVerbose(true);
     
     //in clock tics
-    double traceLength = len*2;
-    double traceDelay = traceLength*0.25;
+    double traceLength = len / (2*el+eg);
+    double traceDelay = traceLength*0.5;
 
     SignalGenerator sig;
     sig.SetSignalType("gaussian");
     //assume the times here are in clockticks
     sig.SetDelay(traceDelay);
-    sig.SetSigma(2.0);
+    sig.SetSigma(5.0);
 
-    for(unsigned int i = 0; i < 1e6; i++) {
+    unsigned int numTrials = 1e6;
+    for(unsigned int i = 0; i < numTrials; i++) {
         sig.SetAmplitude(amps(twist));
         
         vector<double> single;
         for(double i = 0; i < traceLength; i++)
             single.push_back(sig.GetSignalValue(i));
         
-        double filt = filter.CalcFilter(&single);
+        filter.CalcFilters(&single);
         
-        output << sig.GetAmplitude() << " " << filt << endl;
+        output << sig.GetAmplitude() << " " << filter.GetEnergy() << endl;
     }
     output.close();
 }
