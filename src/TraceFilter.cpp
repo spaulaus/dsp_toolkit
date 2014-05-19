@@ -36,9 +36,16 @@ TraceFilter::TraceFilter(const unsigned int &adc,
     e_ = eFilt;
     t_ = tFilt;
     adc_ = adc;
+
+    ConvertToClockticks();
 }
 
 void TraceFilter::CalcBaseline(void) {
+    
+
+
+
+
     if(sig_->size() < 15) {
         cerr << "There are not enough bins for the baseline!" 
              << " Expect problems! " << endl;
@@ -53,7 +60,6 @@ void TraceFilter::CalcBaseline(void) {
 
 void TraceFilter::CalcFilters(const vector<double> *sig) {
     sig_ = sig;
-    ConvertToClockticks();
     CalcBaseline();
     
     CalcTriggerFilter();
@@ -95,11 +101,7 @@ void TraceFilter::CalcEnergyFilterCoeffs(void) {
 void TraceFilter::CalcEnergyFilterLimits(void) {
     double l = e_.GetRisetime(), g = e_.GetFlattop();
     
-    double p0 = trigPos_ -l -10;
-
-    if(p0 < 0)
-        p0 = 0;
-        
+    double p0 = 2*l+g;
     double p1 = p0+l-1;
     double p2 = p0+l;
     double p3 = p0+l+g-1;
