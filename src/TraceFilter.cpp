@@ -1,11 +1,33 @@
+/***************************************************************************
+  *  Copyright S. V. Paulauskas 2014                                       *
+  *                                                                        *
+  *  This program is free software: you can redistribute it and/or modify  *
+  *  it under the terms of the GNU General Public License as published by  *
+  *  the Free Software Foundation, version 3.0 License.                    *
+  *                                                                        *
+  *  This program is distributed in the hope that it will be useful,       *
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+  *  GNU General Public License for more details.                          *
+  *                                                                        *
+  *  You should have received a copy of the GNU General Public License     *
+  *  along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+  **************************************************************************
+*/
+
 /** \file TraceFilter.cpp
  *  \brief A class to perform trapezoidal filtering
  *  \author S. V. Paulauskas
  *  \date 23 April 2014
  *
+ *  Copyright S. V. Paulauskas 2014
+ * 
  *  This code is based off of the IGOR macro energy.ipf
  *  written by H. Tan of XIA LLC and parts of the nscope
- *  program written at the NSCL.
+ *  program written at the NSC written by C.Prokop.
+ *
+ *  Published under the GNU GPL v. 3.0
+ *  
  */
 #include <algorithm>
 #include <iostream>
@@ -41,11 +63,6 @@ TraceFilter::TraceFilter(const unsigned int &adc,
 }
 
 void TraceFilter::CalcBaseline(void) {
-    
-
-
-
-
     if(sig_->size() < 15) {
         cerr << "There are not enough bins for the baseline!" 
              << " Expect problems! " << endl;
