@@ -1,0 +1,3 @@
+1. Get the baseline calculation going in a bit more reasonable fashion
+2. Clean things up so that I can output both the energy and a vector
+   containing the actual filter signal.
