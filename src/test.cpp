@@ -25,6 +25,7 @@
  *  program written at the NSCL written by C.Prokop.
  *
  */
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -37,60 +38,79 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
+    vector<double> trc, trcMb, trcP;
     unsigned int seed = 
         chrono::system_clock::now().time_since_epoch().count();
     mt19937_64 twist (seed);
     uniform_real_distribution<double> mult(0.0,1.0);
     normal_distribution<double> amps(2048, 2);
 
-    ofstream output("out.dat");
-    
-    // Sampling frequency
-    double adc = 100;
-    // times here in us
+    ifstream infile("data/trc.dat");
+    if(!infile)
+        cerr << "Cannot open input file. Try again, son." << endl;
+    else {
+        while(infile) {
+            if (isdigit(infile.peek())) {
+                int junk, junk1;
+                infile >> junk >> junk1;
+                trc.push_back(junk1);
+            } else
+                infile.ignore(1000,'\n');
+        }
+    }
+    infile.close();
+
+     //--------- Calcualte the baseline subtracted trace ----------
+    double baseline = 0;
+    for(unsigned int i = 0; i < 290; i++)
+        baseline += trc[i];
+    baseline /= 290.;
+    for(const auto &i : trc)
+        trcMb.push_back(i-baseline);
+
+    //---------- Calculate the maximum position in the trace (trigger pos)
+    vector<double>::iterator maxElement =
+        max_element(trcMb.begin(),trcMb.end());
+    //unsigned int maxPos = (unsigned int)(maxElement - trcMb.begin());
+
+
+    //times in us and thresh in ADC units
+    unsigned int adc = 100;
     double tl = 0.2, tg = 0.03;
     unsigned int thresh = 6;
-    double el = 0.6, eg = 0.2, tau = 1.;
-
-    //experiment values
-    // double tl = 0.2, tg = 0.03;
-    // unsigned int thresh = 6;
-    // double el = 0.6, eg = 0.24, tau = 0.9;
-
-    double len = 3*(2*(el*adc)+(eg*adc));
+    double el = 0.6, eg = 0.24, tau = 0.9;
 
     FilterParameters trigger(tl,tg, thresh);
     FilterParameters energy(el,eg,tau);
     TraceFilter filter(adc , trigger, energy);
     //filter.SetVerbose(true);
-    
-    //in clock tics
-    double traceLength = len;
-    double traceDelay = len/3;
-
-    SignalGenerator sig;
-    sig.SetSignalType("pixie");
-    //assume the times here are in clockticks
-    sig.SetDelay(traceDelay);
-    sig.SetSigma(50.0);
-    sig.SetDecayConstant(150.0);
-    sig.SetBaseline(0.0);
-
-    unsigned int numTrials = 1e5;
-    for(unsigned int i = 0; i < numTrials; i++) {
-        sig.SetAmplitude(amps(twist));
-        
-        vector<double> single;
-        for(double i = 0; i < traceLength; i++)
-            single.push_back(sig.GetSignalValue(i));
-        
-        if(i == 0)
-            for(const auto &i : single)
-                cout << i << endl;
-        
-        filter.CalcFilters(&single);
-        
-        output << sig.GetAmplitude() << " " << filter.GetEnergy() << endl;
+   
+    unsigned int diff = 30;
+    for(unsigned int i = 0; i < trc.size(); i++) {
+        if(i < diff)
+            trcP.push_back(trc.at(i));
+        else
+            trcP.push_back(trc.at(i)+trcMb.at(i-diff));
     }
-    output.close();
+
+    //Calculate for the original trace
+    filter.CalcFilters(&trc);
+    double trcEn = filter.GetEnergy();
+    unsigned int pos0 = filter.GetTriggerPosition();
+    //Calcualte for the baseline subtracted trace
+    filter.CalcFilters(&trcMb);
+    double trcmbEn =  filter.GetEnergy();
+    unsigned int pos1 = filter.GetTriggerPosition();
+    vector<double> filt = filter.GetTriggerFilter();
+    //calculate for the piledup trace
+    filter.CalcFilters(&trcP);
+    double trcpEn = filter.GetEnergy();
+    unsigned int pos2 = filter.GetTriggerPosition();
+    
+    cerr << "#" << baseline << " " << filter.GetBaseline() << " " 
+         << trcEn << " " << trcmbEn << " " << trcpEn << endl;
+    cerr << "#" << pos0 << " " << pos1 << " " << pos2 << endl;
+    
+    for(unsigned int i = 0; i < trcMb.size(); i++)
+        cout << trcMb[i] << " " << filt[i] << endl;
 }

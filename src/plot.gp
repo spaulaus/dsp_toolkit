@@ -11,13 +11,13 @@ bin(x,width)=width*floor(x/width)+width/2.0
 
 set ylabel "Counts / 0.001"
 set xlabel "Energy (arb)"
-set terminal wxt 0
-plot file u (bin($1,binwidth)):(1.0/binwidth) smooth freq w steps t 'Amplitude'
-set terminal wxt 1
-plot file u (bin($2,binwidth)):(1.0/binwidth) smooth freq w steps t 'Filter'
+# set terminal wxt 0
+# plot file u (bin($1,binwidth)):(1.0/binwidth) smooth freq w steps t 'Amplitude'
+# set terminal wxt 1
+# plot file u (bin($2,binwidth)):(1.0/binwidth) smooth freq w steps t 'Filter'
 
 set terminal wxt 2
-plot file1 
+plot [200:400] file1 u 1, '' u 2
 
 #set terminal postscript eps enhanced color solid "Helvetica, 24"
 #set output '../pics/gaussTest.eps'

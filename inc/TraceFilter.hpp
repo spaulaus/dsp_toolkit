@@ -62,6 +62,8 @@ public:
     double GetAdcSample(void){return(adc_);};
     double GetBaseline(void){return(baseline_);};
     double GetEnergy(void){return(energy_);};
+    unsigned int GetTriggerPosition(void){return(trigPos_);};
+    std::vector<double> GetTriggerFilter(void) {return(trigFilter_);};
 
     void CalcFilters(const std::vector<double> *sig);
     
@@ -69,16 +71,16 @@ public:
     void SetSig(const std::vector<double> *sig){sig_ = sig;};
     void SetVerbose(const bool &a){loud_ = a;};
 private:
-    bool loud_;
+    bool loud_, finishedConvert_;
     unsigned int adc_, trigPos_;
     double baseline_, energy_;
 
     FilterParameters e_, t_;
     
     const std::vector<double> *sig_;
-    std::vector<double> coeffs_;
-    std::vector<unsigned int> limits_, trigFilter_;
-
+    std::vector<double> coeffs_, trigFilter_;
+    std::vector<unsigned int> limits_;
+    
     void CalcBaseline(void); 
     void CalcEnergyFilterLimits(void);
     void CalcEnergyFilterCoeffs(void);
