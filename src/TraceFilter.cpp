@@ -64,16 +64,36 @@ TraceFilter::TraceFilter(const unsigned int &adc,
 }
 
 void TraceFilter::CalcBaseline(void) {
-    if(sig_->size() < 15) {
-        cerr << "There are not enough bins for the baseline!"
-             << " Expect problems! " << endl;
-        baseline_ = *max_element(sig_->begin(), sig_->end());
+    //We need at least 2*l+g (energy filter pars) to calculate the baseline
+    double l = e_.GetRisetime(), g = e_.GetFlattop();
+    unsigned int offset = trigPos_ - l - 10;
+    unsigned int numbases = floor(offset/(2*l+g));
+    baseline_ = 0;
+
+    if(numbases == 0) {
+        cerr << "There are not enough bins for the baseline! I will be recording"
+             << "an energy of Zero (O) for this event!! Expect problems! " 
+             << endl;
+        baseline_ = 0;
+        return;
     }
 
-    baseline_ = 0;
-    for(unsigned int i = 0; i < 15; i++)
-        baseline_ += sig_->at(i);
-    baseline_ /= 15;
+    double partA, partB, partC;
+    for(unsigned int k = 0; k < numbases; k++) {
+        unsigned int offnew = offset - (2*l+g)*(k+1);
+        for(unsigned int i = offnew; i < offnew+l-1; i++)
+            partA += sig_->at(i);
+        for(unsigned int i = offnew+l; i < offnew+l+g-1; i++)
+            partB += sig_->at(i);
+        for(unsigned int i = offnew+l+g; i < offnew+2*l+g-1; i++)
+            partC += sig_->at(i);
+        baseline_ += coeffs_[0]*partA + coeffs_[1]*partB + coeffs_[2]*partC;
+    }
+    baseline_ /= numbases;
+
+    // for(unsigned int i = 0; i < 15; i++)
+    //     baseline_ += sig_->at(i);
+    // baseline_ /= 15;
 }
 
 void TraceFilter::CalcFilters(const vector<double> *sig) {
@@ -82,15 +102,19 @@ void TraceFilter::CalcFilters(const vector<double> *sig) {
     if(!finishedConvert_)
         ConvertToClockticks();
 
-    CalcBaseline();
     CalcTriggerFilter();
-    CalcEnergyFilter();
+    CalcEnergyFilterLimits();
+    CalcEnergyFilterCoeffs();
+    
+    CalcBaseline();
+
+    if(baseline_ == 0)
+        energy_ = 0;
+    else
+        CalcEnergyFilter();
 }
 
 void TraceFilter::CalcEnergyFilter(void) {
-    CalcEnergyFilterLimits();
-    CalcEnergyFilterCoeffs();
-
     energy_ = 0;
     double partA = 0, partB = 0, partC = 0;
 
