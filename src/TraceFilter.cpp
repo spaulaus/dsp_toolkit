@@ -63,7 +63,7 @@ TraceFilter::TraceFilter(const unsigned int &adc,
     loud_ = false;
 }
 
-void TraceFilter::CalcBaseline(void) {
+bool TraceFilter::CalcBaseline(void) {
     double l = t_.GetRisetime();
     int offset = trigPos_ - l - 5;
     baseline_ = 0;
@@ -73,17 +73,18 @@ void TraceFilter::CalcBaseline(void) {
              << "Warning: There are not enough bins for the baseline! " << endl 
              << "I will be recording an energy of Zero (O) for this event!! " 
              << "Expect problems!" << endl << endl;
-        baseline_ = 0;
+        return(false);
     } else {
-        for(unsigned int i = 0; i < (unsigned int)offset; i++)
+        for(unsigned int i = 0; i < (unsigned int) offset; i++)
             baseline_ += sig_->at(i);
         baseline_ /= offset;
-    }
 
-    if(loud_)
-        cout << "Baseline Calculation : " << endl
-             << "  Range:" << "  Low = 0  High = " << offset << endl
-             << "  Value:  " << baseline_ << endl;
+        if(loud_)
+            cout << "Baseline Calculation : " << endl
+                 << "  Range:" << " Low = 0  High = " << offset << endl
+                 << "  Value:  " << baseline_ << endl;
+        return(true);
+    }
 }
 
 void TraceFilter::CalcFilters(const vector<double> *sig) {
@@ -92,19 +93,15 @@ void TraceFilter::CalcFilters(const vector<double> *sig) {
     if(!finishedConvert_)
         ConvertToClockticks();
 
-    CalcTriggerFilter();
-    CalcEnergyFilterLimits();
-    CalcEnergyFilterCoeffs();
-    
-    CalcBaseline();
-
-    if(baseline_ == 0)
-        energy_ = 0;
-    else
+    if(!CalcTriggerFilter() || !CalcEnergyFilterLimits() || !CalcBaseline()) {
+        energy_ = 0; 
+        return;
+    }else
         CalcEnergyFilter();
 }
 
 void TraceFilter::CalcEnergyFilter(void) {
+    CalcEnergyFilterCoeffs();
     energy_ = 0;
     double partA = 0, partB = 0, partC = 0;
 
@@ -135,7 +132,7 @@ void TraceFilter::CalcEnergyFilterCoeffs(void) {
              << "  CFall : " << coeffs_[2] << endl;
 }
 
-void TraceFilter::CalcEnergyFilterLimits(void) {
+bool TraceFilter::CalcEnergyFilterLimits(void) {
     limits_.clear();
     double l = e_.GetRisetime(), g = e_.GetFlattop();
 
@@ -147,29 +144,29 @@ void TraceFilter::CalcEnergyFilterLimits(void) {
     double p5 = p0+2*l+g-1;
     double p7 = trigPos_ + l + g;
 
+    if(p7 > sig_->size()) {
+        cerr << "The trigger came too late in the trace! I cannnot perform "
+             << "the sums over the necessary ranges, giving zero energy!!"
+             << endl;
+        return(false);
+    }
+
+    if(loud_)
+        cout << "The limits for the Energy filter sums: " << endl
+             << "  Rise Sum : Low = " << p0 << " High = " << p1 << endl
+             << "  Gap Sum  : Low = " << p2 << " High = " << p3 << endl
+             << "  Fall Sum : Low = " << p4 << " High = " << p5 << endl;
+
     limits_.push_back(p0);      // beginning of  sum E0
     limits_.push_back(p1);      // end of sum E0
     limits_.push_back(p2);      // beginning of gap sum
     limits_.push_back(p3);      // end of gap sum
     limits_.push_back(p4);      // beginning of sum E1
     limits_.push_back(p5);      // end of sum E1
-    
-    for(auto i = 0; i < limits_.size(); i++)
-        if(limits_[i] > sig_->size())
-            limits_[i] = sig_->size()-1;
-
-    if(loud_)
-        cout << "The limits for the Energy filter sums: " << endl
-             << "  Rise Sum : Low = " << limits_[0] << " High = " 
-             << limits_[1] << endl
-             << "  Gap Sum  : Low = " << limits_[2] << " High = " 
-             << limits_[3] << endl
-             << "  Fall Sum : Low = " << limits_[4] << " High = " 
-             << limits_[5] << endl;
-
+    return(true);
 }
 
-void TraceFilter::CalcTriggerFilter(void) {
+bool TraceFilter::CalcTriggerFilter(void) {
     trigFilter_.clear();
     trigPos_ = 0;
     int l = t_.GetRisetime(), g = t_.GetFlattop();
@@ -187,6 +184,11 @@ void TraceFilter::CalcTriggerFilter(void) {
     }
     if(loud_)
         cout << "The Trigger Position : " << endl << "  " << trigPos_ << endl;
+
+    if(trigPos_ != 0)
+        return(true);
+    else
+        return(false);
 }
 
 void TraceFilter::ConvertToClockticks(void) {

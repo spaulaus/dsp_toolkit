@@ -84,11 +84,12 @@ private:
     std::vector<double> coeffs_, trigFilter_;
     std::vector<unsigned int> limits_;
     
-    void CalcBaseline(void); 
-    void CalcEnergyFilterLimits(void);
+    bool CalcBaseline(void); 
+    bool CalcEnergyFilterLimits(void);
+    bool CalcTriggerFilter(void);
+
     void CalcEnergyFilterCoeffs(void);
     void CalcEnergyFilter(void);
-    void CalcTriggerFilter(void);
     void ConvertToClockticks(void);
 };
 #endif //__TRACEFILTER_HPP__
