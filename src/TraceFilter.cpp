@@ -64,36 +64,25 @@ TraceFilter::TraceFilter(const unsigned int &adc,
 }
 
 void TraceFilter::CalcBaseline(void) {
-    //We need at least 2*l+g (energy filter pars) to calculate the baseline
-    double l = e_.GetRisetime(), g = e_.GetFlattop();
-    unsigned int offset = trigPos_ - l - 10;
-    unsigned int numbases = floor(offset/(2*l+g));
+    double l = t_.GetRisetime();
+    int offset = trigPos_ - l - 5;
     baseline_ = 0;
 
-    if(numbases == 0) {
-        cerr << "There are not enough bins for the baseline! I will be recording"
-             << "an energy of Zero (O) for this event!! Expect problems! " 
-             << endl;
+    if(offset <= 0) {
+        cerr << "Warning: There are not enough bins for the baseline! " << endl 
+             << "I will be recording an energy of Zero (O) for this event!! " 
+             << "Expect problems!" << endl;
         baseline_ = 0;
-        return;
+    } else {
+        for(unsigned int i = 0; i < offset; i++)
+            baseline_ += sig_->at(i);
+        baseline_ /= offset;
     }
 
-    double partA, partB, partC;
-    for(unsigned int k = 0; k < numbases; k++) {
-        unsigned int offnew = offset - (2*l+g)*(k+1);
-        for(unsigned int i = offnew; i < offnew+l-1; i++)
-            partA += sig_->at(i);
-        for(unsigned int i = offnew+l; i < offnew+l+g-1; i++)
-            partB += sig_->at(i);
-        for(unsigned int i = offnew+l+g; i < offnew+2*l+g-1; i++)
-            partC += sig_->at(i);
-        baseline_ += coeffs_[0]*partA + coeffs_[1]*partB + coeffs_[2]*partC;
-    }
-    baseline_ /= numbases;
-
-    // for(unsigned int i = 0; i < 15; i++)
-    //     baseline_ += sig_->at(i);
-    // baseline_ /= 15;
+    if(loud_)
+        cout << "Baseline Calculation : " << endl
+             << "  Range:" << "  0 - " << offset << endl
+             << "  Value:  " << baseline_ << endl;
 }
 
 void TraceFilter::CalcFilters(const vector<double> *sig) {
@@ -130,7 +119,8 @@ void TraceFilter::CalcEnergyFilter(void) {
 }
 
 void TraceFilter::CalcEnergyFilterCoeffs(void) {
-    double beta = exp(-1.0/e_.GetTau());
+    double deltaT = (1. / (adc_*1.e6))*1e9; //in ns/sample
+    double beta = exp(-deltaT/ e_.GetTau());
     double cg = 1-beta;
     double ctmp = 1-pow(beta,e_.GetRisetime());
     coeffs_.push_back(-(cg/ctmp)*pow(beta,e_.GetRisetime()));
@@ -154,9 +144,7 @@ void TraceFilter::CalcEnergyFilterLimits(void) {
     double p3 = p0+l+g-1;
     double p4 = p0+l+g;
     double p5 = p0+2*l+g-1;
-
-    if(p5 > sig_->size())
-        p5 = (double)sig_->size();
+    double p7 = trigPos_ + l + g;
 
     if(loud_)
         cout << "The limits for the Energy filter sums: " << endl

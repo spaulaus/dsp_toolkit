@@ -60,22 +60,8 @@ int main(int argc, char* argv[]) {
     }
     infile.close();
 
-     //--------- Calcualte the baseline subtracted trace ----------
-    double baseline = 0;
-    for(unsigned int i = 0; i < 290; i++)
-        baseline += trc[i];
-    baseline /= 290.;
-    for(const auto &i : trc)
-        trcMb.push_back(i-baseline);
-
-    //---------- Calculate the maximum position in the trace (trigger pos)
-    vector<double>::iterator maxElement =
-        max_element(trcMb.begin(),trcMb.end());
-    //unsigned int maxPos = (unsigned int)(maxElement - trcMb.begin());
-
-
-    //times in us and thresh in ADC units
-    unsigned int adc = 100;
+    //times in us, sampling in MHz, and thresh in ADC units
+    unsigned int adc = 100; // in MHz
     double tl = 0.2, tg = 0.03;
     unsigned int thresh = 6;
     double el = 0.6, eg = 0.24, tau = 0.9;
@@ -83,34 +69,10 @@ int main(int argc, char* argv[]) {
     FilterParameters trigger(tl,tg, thresh);
     FilterParameters energy(el,eg,tau);
     TraceFilter filter(adc , trigger, energy);
-    //filter.SetVerbose(true);
+    filter.SetVerbose(true);
    
-    unsigned int diff = 30;
-    for(unsigned int i = 0; i < trc.size(); i++) {
-        if(i < diff)
-            trcP.push_back(trc.at(i));
-        else
-            trcP.push_back(trc.at(i)+trcMb.at(i-diff));
-    }
-
     //Calculate for the original trace
     filter.CalcFilters(&trc);
     double trcEn = filter.GetEnergy();
-    unsigned int pos0 = filter.GetTriggerPosition();
-    //Calcualte for the baseline subtracted trace
-    filter.CalcFilters(&trcMb);
-    double trcmbEn =  filter.GetEnergy();
-    unsigned int pos1 = filter.GetTriggerPosition();
-    vector<double> filt = filter.GetTriggerFilter();
-    //calculate for the piledup trace
-    filter.CalcFilters(&trcP);
-    double trcpEn = filter.GetEnergy();
-    unsigned int pos2 = filter.GetTriggerPosition();
-    
-    cerr << "#" << baseline << " " << filter.GetBaseline() << " " 
-         << trcEn << " " << trcmbEn << " " << trcpEn << endl;
-    cerr << "#" << pos0 << " " << pos1 << " " << pos2 << endl;
-    
-    for(unsigned int i = 0; i < trcMb.size(); i++)
-        cout << trcMb[i] << " " << filt[i] << endl;
+    cout << "Trace Enegy: " << trcEn << endl;
 }

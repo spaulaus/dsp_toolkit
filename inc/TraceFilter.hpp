@@ -64,7 +64,9 @@ public:
     double GetEnergy(void){return(energy_);};
     unsigned int GetTriggerPosition(void){return(trigPos_);};
     std::vector<double> GetTriggerFilter(void) {return(trigFilter_);};
+    std::vector<double> GetEnergyFilterCoefficients(void) {return(coeffs_);};
     std::vector<unsigned int> GetEnergySumLimits(void){return(limits_);};
+
 
     void CalcFilters(const std::vector<double> *sig);
     
