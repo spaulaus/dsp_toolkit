@@ -117,8 +117,8 @@ void TraceFilter::CalcEnergyFilter(void) {
 }
 
 void TraceFilter::CalcEnergyFilterCoeffs(void) {
-    double deltaT = (1. / (adc_*1.e6))*1e9; //in ns/sample
-    double beta = exp(-deltaT/ e_.GetTau());
+    double l = e_.GetRisetime();
+    double beta = exp(-1.0/ e_.GetTau());
     double cg = 1-beta;
     double ctmp = 1-pow(beta,e_.GetRisetime());
     coeffs_.push_back(-(cg/ctmp)*pow(beta,e_.GetRisetime()));
@@ -127,6 +127,7 @@ void TraceFilter::CalcEnergyFilterCoeffs(void) {
 
     if(loud_)
         cout << "The Energy Filter Coefficients: " << endl
+             << "  beta  : " << beta << endl
              << "  CRise : " << coeffs_[0] << endl
              << "  CGap  : " << coeffs_[1] << endl
              << "  CFall : " << coeffs_[2] << endl;
