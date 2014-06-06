@@ -69,19 +69,20 @@ void TraceFilter::CalcBaseline(void) {
     baseline_ = 0;
 
     if(offset <= 0) {
-        cerr << "Warning: There are not enough bins for the baseline! " << endl 
+        cerr << endl 
+             << "Warning: There are not enough bins for the baseline! " << endl 
              << "I will be recording an energy of Zero (O) for this event!! " 
-             << "Expect problems!" << endl;
+             << "Expect problems!" << endl << endl;
         baseline_ = 0;
     } else {
-        for(unsigned int i = 0; i < offset; i++)
+        for(unsigned int i = 0; i < (unsigned int)offset; i++)
             baseline_ += sig_->at(i);
         baseline_ /= offset;
     }
 
     if(loud_)
         cout << "Baseline Calculation : " << endl
-             << "  Range:" << "  0 - " << offset << endl
+             << "  Range:" << "  Low = 0  High = " << offset << endl
              << "  Value:  " << baseline_ << endl;
 }
 
@@ -146,18 +147,26 @@ void TraceFilter::CalcEnergyFilterLimits(void) {
     double p5 = p0+2*l+g-1;
     double p7 = trigPos_ + l + g;
 
-    if(loud_)
-        cout << "The limits for the Energy filter sums: " << endl
-             << "  Rise Sum : Low = " << p0 << " High = " << p1 << endl
-             << "  Gap Sum  : Low = " << p2 << " High = " << p3 << endl
-             << "  Fall Sum : Low = " << p4 << " High = " << p5 << endl;
-
     limits_.push_back(p0);      // beginning of  sum E0
     limits_.push_back(p1);      // end of sum E0
     limits_.push_back(p2);      // beginning of gap sum
     limits_.push_back(p3);      // end of gap sum
     limits_.push_back(p4);      // beginning of sum E1
     limits_.push_back(p5);      // end of sum E1
+    
+    for(auto i = 0; i < limits_.size(); i++)
+        if(limits_[i] > sig_->size())
+            limits_[i] = sig_->size()-1;
+
+    if(loud_)
+        cout << "The limits for the Energy filter sums: " << endl
+             << "  Rise Sum : Low = " << limits_[0] << " High = " 
+             << limits_[1] << endl
+             << "  Gap Sum  : Low = " << limits_[2] << " High = " 
+             << limits_[3] << endl
+             << "  Fall Sum : Low = " << limits_[4] << " High = " 
+             << limits_[5] << endl;
+
 }
 
 void TraceFilter::CalcTriggerFilter(void) {
@@ -171,7 +180,7 @@ void TraceFilter::CalcTriggerFilter(void) {
                 sum1 += sig_->at(a);
             for(int a = i-l+1; a < i+1; a++)
                 sum2 += sig_->at(a);
-            if((sum2 - sum1)/sig_->at(i) > t_.GetThreshold() && trigPos_ == 0)
+            if((sum2 - sum1)/sig_->at(i) >= t_.GetThreshold() && trigPos_ == 0)
                 trigPos_ = i;
             trigFilter_.push_back(sum2 - sum1);
         }
