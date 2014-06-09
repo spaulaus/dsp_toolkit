@@ -60,6 +60,13 @@ int main(int argc, char* argv[]) {
     }
     infile.close();
 
+    double baseline;
+    for(auto i = 0; i < 200; i++)
+        baseline += trc[i];
+    baseline /= 200;
+    for(const auto &i : trc)
+        trcMb.push_back(i-baseline);
+    
     //times in us, sampling in MHz, and thresh in ADC units
     unsigned int adc = 100; // in MHz
     double tl = 0.2, tg = 0.03;
@@ -73,6 +80,14 @@ int main(int argc, char* argv[]) {
    
     //Calculate for the original trace
     filter.CalcFilters(&trc);
+
+    vector<double> coeffs = filter.GetEnergyFilterCoefficients();
+    double filterLen = (2*el+eg)*adc;
+
     double trcEn = filter.GetEnergy();
-    cout << "Trace Enegy: " << trcEn << endl;
+    cout << "Trace Energy: " << trcEn << endl;
+    cout << "Esums Energy: " 
+         << 20489*coeffs[0]+10040*coeffs[1]+16508*coeffs[2]
+         << endl;
+    
 }

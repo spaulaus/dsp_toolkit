@@ -68,23 +68,15 @@ bool TraceFilter::CalcBaseline(void) {
     int offset = trigPos_ - l - 5;
     baseline_ = 0;
 
-    if(offset <= 0) {
-        cerr << endl 
-             << "Warning: There are not enough bins for the baseline! " << endl 
-             << "I will be recording an energy of Zero (O) for this event!! " 
-             << "Expect problems!" << endl << endl;
-        return(false);
-    } else {
-        for(unsigned int i = 0; i < (unsigned int) offset; i++)
-            baseline_ += sig_->at(i);
-        baseline_ /= offset;
-
-        if(loud_)
-            cout << "Baseline Calculation : " << endl
-                 << "  Range:" << " Low = 0  High = " << offset << endl
-                 << "  Value:  " << baseline_ << endl;
-        return(true);
-    }
+    for(unsigned int i = 0; i < (unsigned int) offset; i++)
+        baseline_ += sig_->at(i);
+    baseline_ /= offset;
+    
+    if(loud_)
+        cout << "Baseline Calculation : " << endl
+             << "  Range:" << " Low = 0  High = " << offset << endl
+             << "  Value: " << baseline_ << endl;
+    return(true);
 }
 
 void TraceFilter::CalcFilters(const vector<double> *sig) {
@@ -113,7 +105,6 @@ void TraceFilter::CalcEnergyFilter(void) {
         partC += sig_->at(i);
 
     energy_ = coeffs_[0]*partA + coeffs_[1]*partB + coeffs_[2]*partC;
-    energy_ -= baseline_;
 }
 
 void TraceFilter::CalcEnergyFilterCoeffs(void) {
