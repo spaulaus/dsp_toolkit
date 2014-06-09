@@ -67,7 +67,6 @@ public:
     std::vector<double> GetEnergyFilterCoefficients(void) {return(coeffs_);};
     std::vector<unsigned int> GetEnergySumLimits(void){return(limits_);};
 
-
     void CalcFilters(const std::vector<double> *sig);
     
     void SetAdcSample(const double &a){adc_ = a;};

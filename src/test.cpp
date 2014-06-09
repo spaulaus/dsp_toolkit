@@ -72,7 +72,8 @@ int main(int argc, char* argv[]) {
     double tl = 0.2, tg = 0.03;
     unsigned int thresh = 6;
     double el = 0.6, eg = 0.24, tau = 0.9;
-
+    double filterLen = (2*el+eg)*adc;
+    
     FilterParameters trigger(tl,tg, thresh);
     FilterParameters energy(el,eg,tau);
     TraceFilter filter(adc , trigger, energy);
@@ -80,14 +81,18 @@ int main(int argc, char* argv[]) {
    
     //Calculate for the original trace
     filter.CalcFilters(&trc);
+    
+    //The energy sum information
+    double sumL = 17836;
+    double sumT = 16068;
+    double sumG = 7894;
+    double pb = 3764.69/filterLen;
 
     vector<double> coeffs = filter.GetEnergyFilterCoefficients();
-    double filterLen = (2*el+eg)*adc;
-
     double trcEn = filter.GetEnergy();
     cout << "Trace Energy: " << trcEn << endl;
     cout << "Esums Energy: " 
-         << 20489*coeffs[0]+10040*coeffs[1]+16508*coeffs[2]
+         << (sumL)*coeffs[0]+(sumT)*coeffs[1]+(sumG)*coeffs[2]-pb
          << endl;
     
 }
