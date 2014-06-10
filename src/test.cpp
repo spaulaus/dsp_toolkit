@@ -82,6 +82,14 @@ int main(int argc, char* argv[]) {
     //Calculate for the original trace
     filter.CalcFilters(&trc);
     
+    vector<double> trig = filter.GetTriggerFilter();
+
+    ofstream output("trc.dat");
+    if(output)
+        for(const auto &i : trig)
+            output << i << endl;
+    output.close();
+    
     //The energy sum information
     double sumL = 17836;
     double sumT = 16068;
