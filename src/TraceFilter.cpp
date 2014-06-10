@@ -104,15 +104,15 @@ void TraceFilter::CalcEnergyFilter(void) {
     for(unsigned int i = limits_[4]; i < limits_[5]; i++)
         partC += sig_->at(i);
 
-    energy_ = coeffs_[0]*partA + coeffs_[1]*partB + coeffs_[2]*partC;
+    energy_ = coeffs_[0]*partA + coeffs_[1]*partB + coeffs_[2]*partC - baseline_;
 }
 
 void TraceFilter::CalcEnergyFilterCoeffs(void) {
     double l = e_.GetRisetime();
     double beta = exp(-1.0/ e_.GetTau());
     double cg = 1-beta;
-    double ctmp = 1-pow(beta,e_.GetRisetime());
-    coeffs_.push_back(-(cg/ctmp)*pow(beta,e_.GetRisetime()));
+    double ctmp = 1-pow(beta,l);
+    coeffs_.push_back(-(cg/ctmp)*pow(beta,l));
     coeffs_.push_back(cg);
     coeffs_.push_back(cg/ctmp);
 

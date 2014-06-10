@@ -94,19 +94,32 @@ int main(int argc, char* argv[]) {
     double sumL = 20489;
     double sumT = 10040;
     double sumG = 16508;
-    double pb = 3780.7283/filterLen;
+    double pb = 3780.7283;
+    double pbPerSamp = pb / filterLen;
 
+    // b1 = exp(-1/(tau*adc));
+    // a0 = pow(b1,l*adc)/(pow(b1,l*adc)-1.0);
+    // ag = 1.0;
+    // a1 = -1.0/(pow(b1,l*adc)-1.0);
+    
     vector<double> coeffs = filter.GetEnergyFilterCoefficients();
     double trcEn = filter.GetEnergy();
+    cout << "Pixie baseline : " << pb << endl;
     cout << "Trace Energy: " << trcEn << endl;
     cout << "Esums Energy Calc 1 : " 
-         << (sumL)*coeffs[0]+(sumT)*coeffs[1]+(sumG)*coeffs[2]-pb
+         << (sumL)*coeffs[0]+(sumT)*coeffs[1]+(sumG)*coeffs[2]-pbPerSamp
          << endl;
     cout << "Esums Energy Calc 2 : " 
-         << (sumL-pb)*coeffs[0]+(sumT-pb)*coeffs[1]+(sumG-pb)*coeffs[2]
+         << (sumL-pbPerSamp)*coeffs[0]+(sumT-pbPerSamp)*coeffs[1]+(sumG-pbPerSamp)*coeffs[2]
          << endl;
     cout << "Esums Energy Calc 3 : " 
          << (sumL)*coeffs[0]+(sumT)*coeffs[1]+(sumG)*coeffs[2]
+         << endl;
+    cout << "Esums Energy Calc 4 : " 
+         << (sumL-pb)*coeffs[0]+(sumT-pb)*coeffs[1]+(sumG-pb)*coeffs[2]
+         << endl;
+    cout << "Esums Energy Calc 5 : " 
+         << (sumL)*coeffs[0]+(sumT)*coeffs[1]+(sumG)*coeffs[2] - pb
          << endl;
     
 }
