@@ -91,16 +91,19 @@ int main(int argc, char* argv[]) {
     output.close();
     
     //The energy sum information
-    double sumL = 17836;
-    double sumT = 16068;
-    double sumG = 7894;
-    double pb = 3764.69/filterLen;
+    double sumL = 20489;
+    double sumT = 10040;
+    double sumG = 16508;
+    double pb = 3780.7283/filterLen;
 
     vector<double> coeffs = filter.GetEnergyFilterCoefficients();
     double trcEn = filter.GetEnergy();
     cout << "Trace Energy: " << trcEn << endl;
-    cout << "Esums Energy: " 
+    cout << "Esums Energy 1 : " 
          << (sumL)*coeffs[0]+(sumT)*coeffs[1]+(sumG)*coeffs[2]-pb
+         << endl;
+    cout << "Esums Energy 2 : " 
+         << (sumL-pb)*coeffs[0]+(sumT-pb)*coeffs[1]+(sumG-pb)*coeffs[2]
          << endl;
     
 }
