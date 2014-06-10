@@ -83,7 +83,8 @@ int main(int argc, char* argv[]) {
     filter.CalcFilters(&trc);
     
     vector<double> trig = filter.GetTriggerFilter();
-
+    vector<double> esums = filter.GetEnergySums();
+    
     ofstream output("trig.dat");
     if(output)
         for(const auto &i : trig)
@@ -92,34 +93,59 @@ int main(int argc, char* argv[]) {
     
     //The energy sum information
     double sumL = 20489;
-    double sumT = 10040;
-    double sumG = 16508;
+    double sumG = 10040;
+    double sumT = 16508;
+    double pE   = 1179;
+
     double pb = 3780.7283;
     double pbPerSamp = pb / filterLen;
 
-    // b1 = exp(-1/(tau*adc));
-    // a0 = pow(b1,l*adc)/(pow(b1,l*adc)-1.0);
-    // ag = 1.0;
-    // a1 = -1.0/(pow(b1,l*adc)-1.0);
-    
     vector<double> coeffs = filter.GetEnergyFilterCoefficients();
     double trcEn = filter.GetEnergy();
-    cout << "Pixie baseline : " << pb << endl;
+
+    cout << endl << "Calculations using my coefficients" << endl
+         << "----------------------------" << endl;
+    cout << "Trc Energy Sums : ";
+    for(const auto &i : esums)
+        cout << i << " ";
+    cout << endl;
+    
     cout << "Trace Energy: " << trcEn << endl;
     cout << "Esums Energy Calc 1 : " 
-         << (sumL)*coeffs[0]+(sumT)*coeffs[1]+(sumG)*coeffs[2]-pbPerSamp
+         << sumL*coeffs[0]+sumG*coeffs[1]+sumT*coeffs[2]-pbPerSamp
          << endl;
     cout << "Esums Energy Calc 2 : " 
-         << (sumL-pbPerSamp)*coeffs[0]+(sumT-pbPerSamp)*coeffs[1]+(sumG-pbPerSamp)*coeffs[2]
+         << (sumL-pbPerSamp)*coeffs[0]+(sumG-pbPerSamp)*coeffs[1]+(sumT-pbPerSamp)*coeffs[2]
          << endl;
     cout << "Esums Energy Calc 3 : " 
-         << (sumL)*coeffs[0]+(sumT)*coeffs[1]+(sumG)*coeffs[2]
+         << sumL*coeffs[0]+sumG*coeffs[1]+sumT*coeffs[2]
          << endl;
     cout << "Esums Energy Calc 4 : " 
-         << (sumL-pb)*coeffs[0]+(sumT-pb)*coeffs[1]+(sumG-pb)*coeffs[2]
+         << (sumL-pb)*coeffs[0]+(sumG-pb)*coeffs[1]+(sumT-pb)*coeffs[2]
          << endl;
     cout << "Esums Energy Calc 5 : " 
-         << (sumL)*coeffs[0]+(sumT)*coeffs[1]+(sumG)*coeffs[2] - pb
+         << (sumL/(el*adc))*coeffs[0]+(sumG/(el*adc))*coeffs[1]+(sumT/(el*adc))*coeffs[2]
          << endl;
+    cout << "Esums Energy Calc 6 : " 
+         << (sumL/(el*adc))+(sumG/(el*adc))+(sumT/(el*adc))
+         << endl;
+
+    double b1 = exp(-1/(tau*adc));
+    double a0 = pow(b1,el*adc)/(pow(b1,el*adc)-1.0);
+    double ag = 1.0;
+    double a1 = -1.0/(pow(b1,el*adc)-1.0);
+    cout << endl << "Calculations using C. Prokop's coefficients" << endl
+         << "----------------------------" << endl;
+    cout << "Coeffs: " << endl << "  a0 = " << a0 << endl << "  ag = " << ag << endl 
+         << "  a1 = " << a1 << endl;
+    cout << "Esums Energy Calc 1 : " 
+         << (sumL)*a0+(sumG)*ag+(sumT)*a1 - pb
+         << endl;
+    cout << "Esums Energy Calc 2 : " 
+         << (sumL-pb)*a0+(sumG-pb)*ag+(sumT-pb)*a1
+         << endl;
+
+
+
     
 }

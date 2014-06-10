@@ -103,6 +103,9 @@ void TraceFilter::CalcEnergyFilter(void) {
         partB += sig_->at(i);
     for(unsigned int i = limits_[4]; i < limits_[5]; i++)
         partC += sig_->at(i);
+    esums_.push_back(partA);
+    esums_.push_back(partB);
+    esums_.push_back(partC);
 
     energy_ = coeffs_[0]*partA + coeffs_[1]*partB + coeffs_[2]*partC - baseline_;
 }
@@ -128,7 +131,7 @@ bool TraceFilter::CalcEnergyFilterLimits(void) {
     limits_.clear();
     double l = e_.GetRisetime(), g = e_.GetFlattop();
 
-    double p0 = trigPos_ - l - 10;
+    double p0 = trigPos_-l-10;
     double p1 = p0+l-1;
     double p2 = p0+l;
     double p3 = p0+l+g-1;

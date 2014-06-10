@@ -65,6 +65,7 @@ public:
     unsigned int GetTriggerPosition(void){return(trigPos_);};
     std::vector<double> GetTriggerFilter(void) {return(trigFilter_);};
     std::vector<double> GetEnergyFilterCoefficients(void) {return(coeffs_);};
+    std::vector<double> GetEnergySums(void) {return(esums_);};
     std::vector<unsigned int> GetEnergySumLimits(void){return(limits_);};
 
     void CalcFilters(const std::vector<double> *sig);
@@ -80,7 +81,7 @@ private:
     FilterParameters e_, t_;
     
     const std::vector<double> *sig_;
-    std::vector<double> coeffs_, trigFilter_;
+    std::vector<double> coeffs_, trigFilter_, esums_;
     std::vector<unsigned int> limits_;
     
     bool CalcBaseline(void); 
