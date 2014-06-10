@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
     
     vector<double> trig = filter.GetTriggerFilter();
 
-    ofstream output("trc.dat");
+    ofstream output("trig.dat");
     if(output)
         for(const auto &i : trig)
             output << i << endl;
@@ -99,11 +99,14 @@ int main(int argc, char* argv[]) {
     vector<double> coeffs = filter.GetEnergyFilterCoefficients();
     double trcEn = filter.GetEnergy();
     cout << "Trace Energy: " << trcEn << endl;
-    cout << "Esums Energy 1 : " 
+    cout << "Esums Energy Calc 1 : " 
          << (sumL)*coeffs[0]+(sumT)*coeffs[1]+(sumG)*coeffs[2]-pb
          << endl;
-    cout << "Esums Energy 2 : " 
+    cout << "Esums Energy Calc 2 : " 
          << (sumL-pb)*coeffs[0]+(sumT-pb)*coeffs[1]+(sumG-pb)*coeffs[2]
+         << endl;
+    cout << "Esums Energy Calc 3 : " 
+         << (sumL)*coeffs[0]+(sumT)*coeffs[1]+(sumG)*coeffs[2]
          << endl;
     
 }
