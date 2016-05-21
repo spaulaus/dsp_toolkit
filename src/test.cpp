@@ -45,10 +45,11 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> mult(0.0,1.0);
     normal_distribution<double> amps(2048, 2);
 
-    ifstream infile("data/trc.dat");
-    if(!infile)
+    ifstream infile("data/trace.dat");
+    if(!infile) {
         cerr << "Cannot open input file. Try again, son." << endl;
-    else {
+        exit(1);
+    } else {
         while(infile) {
             if (isdigit(infile.peek())) {
                 int junk, junk1;
@@ -84,7 +85,7 @@ int main(int argc, char* argv[]) {
     
     vector<double> trig = filter.GetTriggerFilter();
     vector<double> esums = filter.GetEnergySums();
-    
+
     ofstream output("trig.dat");
     if(output)
         for(const auto &i : trig)
@@ -144,8 +145,4 @@ int main(int argc, char* argv[]) {
     cout << "Esums Energy Calc 2 : " 
          << (sumL-pb)*a0+(sumG-pb)*ag+(sumT-pb)*a1
          << endl;
-
-
-
-    
 }

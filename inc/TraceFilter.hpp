@@ -29,26 +29,7 @@
 #include <vector>
 #include <utility>
 
-/*! The class to hold the Filter parameters */
-class FilterParameters {
-public:
-    FilterParameters(){};
-    FilterParameters(const double &l, const double &g, const double &tau);
-    FilterParameters(const double &l, const double &g, const unsigned int &thresh);
-    ~FilterParameters(){};
-
-    double GetFlattop(void){return(g_);};
-    double GetRisetime(void){return(l_);};
-    double GetTau(void){return(tau_);};
-    double GetThreshold(void){return(thresh_);};
-
-    void SetFlattop(const double &a){g_ = a;};
-    void SetRisetime(const double &a){l_ = a;};
-    void SetTau(const double &a){tau_ = a;};
-    void SetThreshold(const double &a){thresh_ = a;};
-private:
-    double g_, l_, tau_, tau1_, tau_2, thresh_;
-};
+#include "FilterParameters.hpp"
 
 /*! The class to perform the filtering */
 class TraceFilter {

@@ -38,21 +38,6 @@
 
 using namespace std;
 
-//----------- Filter Parameter Methods ----------
-FilterParameters::FilterParameters(const double &l, const double &g,
-    const double &tau) {
-    l_ = l;
-    g_ = g;
-    tau_ = tau;
-}
-
-FilterParameters::FilterParameters(const double &l, const double &g,
-                                   const unsigned int &thresh) {
-    l_ = l;
-    g_ = g;
-    thresh_ = thresh;
-}
-
 //----------- Trace Filter Methods -----------
 TraceFilter::TraceFilter(const unsigned int &adc,
                          const FilterParameters &tFilt,
@@ -112,7 +97,7 @@ void TraceFilter::CalcEnergyFilter(void) {
 
 void TraceFilter::CalcEnergyFilterCoeffs(void) {
     double l = e_.GetRisetime();
-    double beta = exp(-1.0/ e_.GetTau());
+    double beta = exp(-1.0/ e_.GetT());
     double cg = 1-beta;
     double ctmp = 1-pow(beta,l);
     coeffs_.push_back(-(cg/ctmp)*pow(beta,l));
@@ -172,7 +157,7 @@ bool TraceFilter::CalcTriggerFilter(void) {
                 sum1 += sig_->at(a);
             for(int a = i-l+1; a < i+1; a++)
                 sum2 += sig_->at(a);
-            if((sum2 - sum1)/l >= t_.GetThreshold() && trigPos_ == 0)
+            if((sum2 - sum1)/l >= t_.GetT() && trigPos_ == 0)
                 trigPos_ = i;
             trigFilter_.push_back((sum2 - sum1)/l);
         } else
@@ -222,16 +207,16 @@ void TraceFilter::ConvertToClockticks(void) {
         e_.SetFlattop(e_.GetFlattop()*adc_);
 
     //Put tau in units of samples
-    e_.SetTau(e_.GetTau()*adc_);
+    e_.SetT(e_.GetT()*adc_);
 
     if(loud_) {
         cout << "Here are the used filter parameters: " << endl
              << "  Fast rise (ns):   " << t_.GetRisetime()*1000/adc_ <<  endl
              << "  Fast flat (ns):   " << t_.GetFlattop()*1000/adc_ <<  endl
-             << "  Thresh (ADC units) : " << t_.GetThreshold() << endl
+             << "  Thresh (ADC units) : " << t_.GetT() << endl
              << "  Energy rise (ns): " << e_.GetRisetime()*1000/adc_ <<  endl
              << "  Energy flat (ns): " << e_.GetFlattop()*1000/adc_ <<  endl
-             << "  Tau(ns) :         " << e_.GetTau()*1000/adc_ << endl;
+             << "  Tau(ns) :         " << e_.GetT()*1000/adc_ << endl;
     }
     finishedConvert_ = true;
 }
