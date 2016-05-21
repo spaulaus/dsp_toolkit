@@ -36,18 +36,20 @@ public:
     ~FilterParameters(){};
 
     //! Returns the value of the flattop
-    double GetFlattop(void){return(g_);};
+    double GetFlattop(void){return(g_);}
     //! Returns the value of the risetime
-    double GetRisetime(void){return(l_);};
+    double GetRisetime(void){return(l_);}
     //! Returns the value of tau/threhsold
-    double GetT(void){return(t_);};
+    double GetT(void){return(t_);}
+    //! Returns the size of the filter
+    double GetSize(void) {return(2*l_+g_);}
 
     //! Sets the value of the flattop
-    void SetFlattop(const double &a){g_ = a;};
+    void SetFlattop(const double &a){g_ = a;}
     //! Sets the value of the risetime
-    void SetRisetime(const double &a){l_ = a;};
+    void SetRisetime(const double &a){l_ = a;}
     //! Sets the value of tau/threhsold
-    void SetT(const double &a){t_ = a;};
+    void SetT(const double &a){t_ = a;}
 private:
     double g_;  //!< the flattop of the filer
     double l_;   //!< the risetime for the filter
