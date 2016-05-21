@@ -75,8 +75,8 @@ int main(int argc, char* argv[]) {
     double el = 0.6, eg = 0.24, tau = 0.9;
     double filterLen = (2*el+eg)*adc;
     
-    FilterParameters trigger(tl,tg, thresh);
-    FilterParameters energy(el,eg,tau);
+    TrapFilterParameters trigger(tl,tg, thresh);
+    TrapFilterParameters energy(el,eg,tau);
     TraceFilter filter(adc , trigger, energy);
     filter.SetVerbose(true);
    

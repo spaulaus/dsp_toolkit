@@ -20,20 +20,21 @@
  *  \date May 21, 2016
  *
  */
-
+#ifndef __TRAPFILTERPARAMETERS_HPP__
+#define __TRAPFILTERPARAMETERS_HPP__
 //!Simple class that holds trapezoidal filter parameters. 
-class FilterParameters {
+class TrapFilterParameters {
 public:
     //!Default Constructor
-    FilterParameters(){};
+    TrapFilterParameters(){};
     //!Constructor accepting risetime, flattop, and tau/threshold parameters
-    FilterParameters(const double &l, const double &g, const double &t){
+    TrapFilterParameters(const double &l, const double &g, const double &t){
         l_ = l;
         g_ = g;
         t_ = t;
     };
     //!Default Destructor
-    ~FilterParameters(){};
+    ~TrapFilterParameters(){};
 
     //! Returns the value of the flattop
     double GetFlattop(void){return(g_);}
@@ -55,3 +56,4 @@ private:
     double l_;   //!< the risetime for the filter
     double t_;  //!< the tau/threhsold for the filter
 };
+#endif //__TRAPFILTERPARAMETERS_HPP__

@@ -29,7 +29,7 @@
 #include <vector>
 #include <utility>
 
-#include "FilterParameters.hpp"
+#include "TrapFilterParameters.hpp"
 
 /*! The class to perform the filtering */
 class TraceFilter {
@@ -37,7 +37,8 @@ public:
     TraceFilter(){};
     TraceFilter(const int &adcSample){adc_ = adcSample;};
     TraceFilter(const unsigned int &adc, 
-                const FilterParameters &tFilt, const FilterParameters &eFilt);
+                const TrapFilterParameters &tFilt,
+                const TrapFilterParameters &eFilt);
     ~TraceFilter(){};
 
     double GetAdcSample(void){return(adc_);};
@@ -59,7 +60,7 @@ private:
     unsigned int adc_, trigPos_;
     double baseline_, energy_;
 
-    FilterParameters e_, t_;
+    TrapFilterParameters e_, t_;
     
     const std::vector<double> *sig_;
     std::vector<double> coeffs_, trigFilter_, esums_;

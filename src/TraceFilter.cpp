@@ -40,8 +40,8 @@ using namespace std;
 
 //----------- Trace Filter Methods -----------
 TraceFilter::TraceFilter(const unsigned int &adc,
-                         const FilterParameters &tFilt,
-                         const FilterParameters &eFilt) {
+                         const TrapFilterParameters &tFilt,
+                         const TrapFilterParameters &eFilt) {
     e_ = eFilt;
     t_ = tFilt;
     adc_ = adc;
