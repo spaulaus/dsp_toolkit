@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
     //times in ns, sampling in ns/S, and thresh in ADC units
     unsigned int adc = 10; // in ns/S
     double tl = 100, tg = 30;
-    unsigned int thresh = 6;
+    unsigned int thresh = 200;
     double el = 600, eg = 240, tau = 90;
     
     TrapFilterParameters trigger(tl,tg, thresh);

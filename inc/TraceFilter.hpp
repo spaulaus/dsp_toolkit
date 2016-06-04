@@ -58,6 +58,7 @@ public:
     double GetEnergy(void){return(energy_);}
 
     unsigned int GetNumTriggers(void) {return(trigs_.size());}
+    unsigned int GetTrigger(void){return(trigs_[0]);}
     
     std::vector<double> GetTriggerFilter(void) {return(trigFilter_);}
     std::vector<double> GetEnergyFilterCoefficients(void) {return(coeffs_);}
@@ -68,12 +69,14 @@ public:
 
     void CalcFilters(const std::vector<double> *sig);
     void SetAdcSample(const double &a){nsPerSample_ = a;}
+    void SetEnergyParams(const TrapFilterParameters &a) {e_ = a; ConvertToClockticks();}
     void SetSig(const std::vector<double> *sig){sig_ = sig;}
+    void SetTriggerParams(const TrapFilterParameters &a) {t_ = a; ConvertToClockticks();}
     void SetVerbose(const bool &a){isVerbose_ = a;}
 
 private:
     bool isVerbose_;
-    bool finishedConvert_;
+    bool isConverted_;
     bool analyzePileup_;
 
     double baseline_;
@@ -92,14 +95,16 @@ private:
     std::vector<unsigned int> limits_;
     std::vector<unsigned int> trigs_;
     
-    bool CalcBaseline(void); 
-    bool CalcEnergyFilterLimits(void);
-    bool CalcTriggerFilter(void);
+    void CalcBaseline(void); 
+    void CalcEnergyFilterLimits(void);
+    void CalcTriggerFilter(void);
 
     void CalcEnergyFilterCoeffs(void);
     void CalcEnergyFilter(void);
     void CheckIfPileup(void);
     void ConvertToClockticks(void);
     void Reset(void);
+
+    enum ErrTypes{NO_TRIG,LATE_TRIG,BAD_FILTER_COEFF,BAD_FILTER_LIMITS,EARLY_TRIG};
 };
 #endif //__TRACEFILTER_HPP__
