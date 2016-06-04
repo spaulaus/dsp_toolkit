@@ -1,5 +1,5 @@
 /***************************************************************************
-  *  Copyright S. V. Paulauskas 2014                                       *
+  *  Copyright S. V. Paulauskas 2014-2016                                  *
   *                                                                        *
   *  This program is free software: you can redistribute it and/or modify  *
   *  it under the terms of the GNU General Public License as published by  *
@@ -50,60 +50,97 @@ public:
                 const bool &analyzePileup = false);
     /** Default Destructor */
     ~TraceFilter(){}
-    
+
+    /** \return True if there was a pileup in the trace */
     bool GetHasPileup(void){return(trigs_.size() > 1);}
-    
-    double GetNsPerSample(void){return(nsPerSample_);}
+
+    /** \return the average value of the baseline */
     double GetBaseline(void){return(baseline_);}
+    /** \return The energy calculated from the first trigger. */
     double GetEnergy(void){return(en_[0]);}
 
+    /** This is the main method that will be used to calculate the filters and 
+     * other necessary information. 
+     * \param [in] : The trace that we are going to be filtering  */
     unsigned int CalcFilters(const std::vector<double> *sig);
+    /** \return The number of triggers that were found */
     unsigned int GetNumTriggers(void) {return(trigs_.size());}
+    /** \return The position in the trace of the first trigger found by the trigger 
+     * filter */
     unsigned int GetTrigger(void){return(trigs_[0]);}
 
+    /** \return The trigger filter */
     std::vector<double> GetTriggerFilter(void) {return(trigFilter_);}
+    /** \return The list of energies that were found if we chose to analyze 
+     * pileup events. */
     std::vector<double> GetEnergies(void){return(en_);}
+    /** There will be three coefficients per identified trigger if we chose to 
+     * analyze pileups. This means the first three elements belong to the first 
+     * trigger, the next three to the second trigger, etc. The size will always 
+     * be 3*NumTriggers.
+     *  \return The list of energy filter coefficients.  */
     std::vector<double> GetEnergyFilterCoefficients(void) {return(coeffs_);}
+    /** There will be three energy sums per identified trigger if we chose to 
+     * analyze pileups. This means the first three elements belong to the first 
+     * trigger, the next three to the second trigger, etc. The size will always 
+     * be 3*NumTriggers.
+     *  \return The list of energy filter coefficients.  */
     std::vector<double> GetEnergySums(void) {return(esums_);}
 
+    /** \return List of the triggers found in the trace.*/
     std::vector<unsigned int> GetTriggers(void){return(trigs_);}
+    /** This will always have 6 elements. If analyzing pileups it will be the 
+     * limits for the last identified pileup. 
+     *  \return List of the limits for the energy sums */
     std::vector<unsigned int> GetEnergySumLimits(void){return(limits_);}
 
+    /** Sets the value of the ns/Sample for the ADC */
     void SetAdcSample(const double &a){nsPerSample_ = a;}
-    void SetEnergyParams(const TrapFilterParameters &a) {e_ = a; ConvertToClockticks();}
+    /** Sets the trapezoidal filter parameters for the energy (slow) filter */
+    void SetEnergyParams(const TrapFilterParameters &a) {
+        e_ = a;
+        ConvertToClockticks();
+    }
+    /** Sets the trace that we are going to use to filter */
     void SetSig(const std::vector<double> *sig){sig_ = sig;}
-    void SetTriggerParams(const TrapFilterParameters &a) {t_ = a; ConvertToClockticks();}
+    /** Sets the trapezoidal filter parameters for the trigger (fast) filter */
+    void SetTriggerParams(const TrapFilterParameters &a) {
+        t_ = a;
+        ConvertToClockticks();
+    }
+    /** Sets the verbosity, useful for debugging issues with the filter.  */
     void SetVerbose(const bool &a){isVerbose_ = a;}
 
 private:
-    bool isVerbose_;
-    bool isConverted_;
-    bool analyzePileup_;
+    bool isVerbose_; //!< True if we want verbose output
+    bool isConverted_; //!< True if Filter Pars converted to clockticks
+    bool analyzePileup_; //!< True if we want to analyze pileups
 
-    double baseline_;
+    double baseline_; //!< the value of the baseline of the trace
 
+    ///Enumeration containing error statuses 
     enum ErrTypes{NO_TRIG=1,LATE_TRIG,BAD_FILTER_COEFF,BAD_FILTER_LIMITS,EARLY_TRIG};
 
-    TrapFilterParameters e_;
-    TrapFilterParameters t_;
+    TrapFilterParameters e_; //!< The energy filter parameters
+    TrapFilterParameters t_; //!< The trigger filter parameters 
     
-    unsigned int nsPerSample_;
+    unsigned int nsPerSample_; //!< The number of ns per sample
 
-    const std::vector<double> *sig_;
-    std::vector<double> en_;
-    std::vector<double> coeffs_;
-    std::vector<double> trigFilter_;
-    std::vector<double> esums_;
+    const std::vector<double> *sig_; //!< the signal to filter
+    std::vector<double> en_; //!< the calculated energies
+    std::vector<double> coeffs_; //!< the calculated energy coefficients
+    std::vector<double> trigFilter_; //!< the calculated trigger filter
+    std::vector<double> esums_; //!< the caluclated energy sums
     
-    std::vector<unsigned int> limits_;
-    std::vector<unsigned int> trigs_;
-    
-    void CalcBaseline(void); 
-    void CalcEnergyFilterCoeffs(void);
-    void CalcEnergyFilterLimits(const unsigned int &tpos);
-    void CalcEnergyFilter(void);
-    void CalcTriggerFilter(void);
-    void ConvertToClockticks(void);
-    void Reset(void);
+    std::vector<unsigned int> limits_; //!< the limits for the energy filter
+    std::vector<unsigned int> trigs_; //!< the identified triggers
+
+    void CalcBaseline(void); //!< calculates the baseline
+    void CalcEnergyFilterCoeffs(void); //!< calculates energy filter coeffs
+    void CalcEnergyFilterLimits(const unsigned int &tpos); //!< calc energy filter limits
+    void CalcEnergyFilter(void); //!< calculate the energy filter
+    void CalcTriggerFilter(void); //!< calculate trigger filter
+    void ConvertToClockticks(void); //!< convert from ns to clockticks
+    void Reset(void); //!< Reset values for repeated calls. 
 };
 #endif //__TRACEFILTER_HPP__
