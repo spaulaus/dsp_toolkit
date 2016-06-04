@@ -83,12 +83,10 @@ int main(int argc, char* argv[]) {
     filter.SetVerbose(true);
    
     //Calculate for the original trace
-    filter.CalcFilters(&trc);
+    auto retval = filter.CalcFilters(&trc);
 
-    if(filter.GetTriggers().size() == 0) {
-        cerr << "Couldn't find a trigger...exiting..." << endl;
-        exit(2);
-    }
+    if(retval != 0)
+        exit(retval);
     
     vector<double> trig = filter.GetTriggerFilter();
     vector<double> esums = filter.GetEnergySums();

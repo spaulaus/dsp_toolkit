@@ -67,9 +67,8 @@ void TraceFilter::CalcBaseline(void) {
              << "  Value: " << baseline_ << endl << endl;
 }
 
-void TraceFilter::CalcFilters(const vector<double> *sig) {
+unsigned int TraceFilter::CalcFilters(const vector<double> *sig) {
     Reset();
-    bool hadErr = false;
     
     sig_ = sig;
 
@@ -82,7 +81,6 @@ void TraceFilter::CalcFilters(const vector<double> *sig) {
         CalcBaseline();
         CalcEnergyFilterCoeffs();
     } catch(ErrTypes errcode) {
-        hadErr = true;
         switch(errcode) {
         case(NO_TRIG) :
             cerr << "We could not find a trigger in the trace." << endl;
@@ -93,7 +91,8 @@ void TraceFilter::CalcFilters(const vector<double> *sig) {
                  << endl;
             break;
         case(EARLY_TRIG) :
-            cerr << "The trigger too early. Could not calculate a baseline." << endl;
+            cerr << "The trigger was too early. Could not calculate baseline "
+                 << "or Energy Filter Limits." << endl;
             break;
         case(BAD_FILTER_COEFF):
             cerr << "One of the energy filter coefficients was nan." << endl;
@@ -102,10 +101,11 @@ void TraceFilter::CalcFilters(const vector<double> *sig) {
             cerr << "The Energy filter was too long for the trace." << endl;
             break;
         }
+        return(errcode);
     }
     
-    if(!hadErr)
-        CalcEnergyFilter();
+    CalcEnergyFilter();
+    return(0);
 }
 
 void TraceFilter::CalcEnergyFilter(void) {

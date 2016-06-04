@@ -57,9 +57,10 @@ public:
     double GetBaseline(void){return(baseline_);}
     double GetEnergy(void){return(energy_);}
 
+    unsigned int CalcFilters(const std::vector<double> *sig);
     unsigned int GetNumTriggers(void) {return(trigs_.size());}
     unsigned int GetTrigger(void){return(trigs_[0]);}
-    
+        
     std::vector<double> GetTriggerFilter(void) {return(trigFilter_);}
     std::vector<double> GetEnergyFilterCoefficients(void) {return(coeffs_);}
     std::vector<double> GetEnergySums(void) {return(esums_);}
@@ -67,7 +68,6 @@ public:
     std::vector<unsigned int> GetTriggers(void){return(trigs_);}
     std::vector<unsigned int> GetEnergySumLimits(void){return(limits_);}
 
-    void CalcFilters(const std::vector<double> *sig);
     void SetAdcSample(const double &a){nsPerSample_ = a;}
     void SetEnergyParams(const TrapFilterParameters &a) {e_ = a; ConvertToClockticks();}
     void SetSig(const std::vector<double> *sig){sig_ = sig;}
@@ -82,11 +82,13 @@ private:
     double baseline_;
     double energy_;
 
-    unsigned int nsPerSample_;
+    enum ErrTypes{NO_TRIG=1,LATE_TRIG,BAD_FILTER_COEFF,BAD_FILTER_LIMITS,EARLY_TRIG};
 
     TrapFilterParameters e_;
     TrapFilterParameters t_;
     
+    unsigned int nsPerSample_;
+
     const std::vector<double> *sig_;
     std::vector<double> coeffs_;
     std::vector<double> trigFilter_;
@@ -96,15 +98,11 @@ private:
     std::vector<unsigned int> trigs_;
     
     void CalcBaseline(void); 
-    void CalcEnergyFilterLimits(void);
-    void CalcTriggerFilter(void);
-
     void CalcEnergyFilterCoeffs(void);
+    void CalcEnergyFilterLimits(void);
     void CalcEnergyFilter(void);
-    void CheckIfPileup(void);
+    void CalcTriggerFilter(void);
     void ConvertToClockticks(void);
     void Reset(void);
-
-    enum ErrTypes{NO_TRIG,LATE_TRIG,BAD_FILTER_COEFF,BAD_FILTER_LIMITS,EARLY_TRIG};
 };
 #endif //__TRACEFILTER_HPP__
