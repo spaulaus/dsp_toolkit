@@ -61,17 +61,11 @@ int main(int argc, char* argv[]) {
     }
     infile.close();
 
-    double baseline;
-    for(auto i = 0; i < 200; i++)
-        baseline += trc[i];
-    baseline /= 200;
-    for(const auto &i : trc)
-        trcMb.push_back(i-baseline);
     
     //times in ns, sampling in ns/S, and thresh in ADC units
     unsigned int adc = 10; // in ns/S
     double tl = 100, tg = 30;
-    unsigned int thresh = 200;
+    unsigned int thresh = 20;
     double el = 600, eg = 240, tau = 90;
     
     TrapFilterParameters trigger(tl,tg, thresh);
@@ -82,15 +76,12 @@ int main(int argc, char* argv[]) {
     TraceFilter filter(adc , trigger, energy);
     filter.SetVerbose(true);
    
-    //Calculate for the original trace
-    auto retval = filter.CalcFilters(&trc);
-
-    if(retval != 0)
-        exit(retval);
+    if(filter.CalcFilters(&trc) != 0)
+        exit(0);
     
     vector<double> trig = filter.GetTriggerFilter();
     vector<double> esums = filter.GetEnergySums();
-
+    
     ofstream output("trig.dat");
     if(output)
         for(const auto &i : trig)

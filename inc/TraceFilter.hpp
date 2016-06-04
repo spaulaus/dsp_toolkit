@@ -55,13 +55,14 @@ public:
     
     double GetNsPerSample(void){return(nsPerSample_);}
     double GetBaseline(void){return(baseline_);}
-    double GetEnergy(void){return(energy_);}
+    double GetEnergy(void){return(en_[0]);}
 
     unsigned int CalcFilters(const std::vector<double> *sig);
     unsigned int GetNumTriggers(void) {return(trigs_.size());}
     unsigned int GetTrigger(void){return(trigs_[0]);}
-        
+
     std::vector<double> GetTriggerFilter(void) {return(trigFilter_);}
+    std::vector<double> GetEnergies(void){return(en_);}
     std::vector<double> GetEnergyFilterCoefficients(void) {return(coeffs_);}
     std::vector<double> GetEnergySums(void) {return(esums_);}
 
@@ -80,7 +81,6 @@ private:
     bool analyzePileup_;
 
     double baseline_;
-    double energy_;
 
     enum ErrTypes{NO_TRIG=1,LATE_TRIG,BAD_FILTER_COEFF,BAD_FILTER_LIMITS,EARLY_TRIG};
 
@@ -90,6 +90,7 @@ private:
     unsigned int nsPerSample_;
 
     const std::vector<double> *sig_;
+    std::vector<double> en_;
     std::vector<double> coeffs_;
     std::vector<double> trigFilter_;
     std::vector<double> esums_;
@@ -99,7 +100,7 @@ private:
     
     void CalcBaseline(void); 
     void CalcEnergyFilterCoeffs(void);
-    void CalcEnergyFilterLimits(void);
+    void CalcEnergyFilterLimits(const unsigned int &tpos);
     void CalcEnergyFilter(void);
     void CalcTriggerFilter(void);
     void ConvertToClockticks(void);

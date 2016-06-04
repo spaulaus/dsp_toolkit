@@ -68,18 +68,23 @@ void TraceFilter::CalcBaseline(void) {
 }
 
 unsigned int TraceFilter::CalcFilters(const vector<double> *sig) {
-    Reset();
-    
-    sig_ = sig;
-
-    if(!isConverted_)
-        ConvertToClockticks();
-    
     try{
+        Reset();
+        sig_ = sig;
+        
+        if(!isConverted_)
+            ConvertToClockticks();
         CalcTriggerFilter();
-        CalcEnergyFilterLimits();
         CalcBaseline();
         CalcEnergyFilterCoeffs();
+
+        for(vector<unsigned int>::iterator it = trigs_.begin(); it!= trigs_.end(); it++) {
+            CalcEnergyFilterLimits((*it));
+            CalcEnergyFilter();
+            
+            if(!analyzePileup_)
+                break;                
+        }
     } catch(ErrTypes errcode) {
         switch(errcode) {
         case(NO_TRIG) :
@@ -103,8 +108,6 @@ unsigned int TraceFilter::CalcFilters(const vector<double> *sig) {
         }
         return(errcode);
     }
-    
-    CalcEnergyFilter();
     return(0);
 }
 
@@ -121,7 +124,10 @@ void TraceFilter::CalcEnergyFilter(void) {
     esums_.push_back(partB);
     esums_.push_back(partC);
 
-    energy_ = coeffs_[0]*partA + coeffs_[1]*partB + coeffs_[2]*partC - baseline_;
+    en_.push_back(coeffs_[0]*partA + coeffs_[1]*partB + coeffs_[2]*partC - baseline_);
+    if(isVerbose_)
+        cout << "********** CalcEnergyFilter **********" << endl
+             << "Calculated Energy : " << en_.back() << endl << endl;
 }
 
 void TraceFilter::CalcEnergyFilterCoeffs(void) {
@@ -145,16 +151,17 @@ void TraceFilter::CalcEnergyFilterCoeffs(void) {
              << "  CFall : " << coeffs_[2] << endl << endl;
 }
 
-void TraceFilter::CalcEnergyFilterLimits(void) {
+void TraceFilter::CalcEnergyFilterLimits(const unsigned int &tpos) {
+    limits_.clear();
     double l = e_.GetRisetime(), g = e_.GetFlattop();
 
-    double p0 = trigs_[0]-l-10;
-    double p1 = p0+l-1;
-    double p2 = p0+l;
-    double p3 = p0+l+g-1;
-    double p4 = p0+l+g;
-    double p5 = p0+2*l+g-1;
-    double p7 = trigs_[0] + l + g;
+    double p0 = tpos - l - 10;
+    double p1 = p0 +l - 1;
+    double p2 = p0 +l;
+    double p3 = p0 + l + g - 1;
+    double p4 = p0 + l + g;
+    double p5 = p0 + 2*l + g - 1;
+    double p7 = tpos + l + g;
 
     if(p0 < 0)
         throw(EARLY_TRIG);
@@ -268,7 +275,7 @@ void TraceFilter::ConvertToClockticks(void) {
 }
 
 void TraceFilter::Reset(void) {
-    energy_ = 0;
+    en_.clear();
     baseline_ = 0;
     trigFilter_.clear();
     trigs_.clear();
