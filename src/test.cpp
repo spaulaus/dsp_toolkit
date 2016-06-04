@@ -45,15 +45,15 @@ int main(int argc, char* argv[]) {
     uniform_real_distribution<double> mult(0.0,1.0);
     normal_distribution<double> amps(2048, 2);
 
-    ifstream infile("data/trace.dat");
+    ifstream infile("data/piledupTrc.dat");
     if(!infile) {
         cerr << "Cannot open input file. Try again, son." << endl;
         exit(1);
     } else {
         while(infile) {
             if (isdigit(infile.peek())) {
-                int junk, junk1;
-                infile >> junk >> junk1;
+                int junk1;
+                infile >> junk1;
                 trc.push_back(junk1);
             } else
                 infile.ignore(1000,'\n');
@@ -68,20 +68,27 @@ int main(int argc, char* argv[]) {
     for(const auto &i : trc)
         trcMb.push_back(i-baseline);
     
-    //times in us, sampling in MHz, and thresh in ADC units
-    unsigned int adc = 100; // in MHz
-    double tl = 0.2, tg = 0.03;
+    //times in ns, sampling in ns/S, and thresh in ADC units
+    unsigned int adc = 10; // in ns/S
+    double tl = 100, tg = 30;
     unsigned int thresh = 6;
-    double el = 0.6, eg = 0.24, tau = 0.9;
-    double filterLen = (2*el+eg)*adc;
+    double el = 600, eg = 240, tau = 90;
     
     TrapFilterParameters trigger(tl,tg, thresh);
     TrapFilterParameters energy(el,eg,tau);
+
+    double eLen = energy.GetSize() / adc;
+
     TraceFilter filter(adc , trigger, energy);
     filter.SetVerbose(true);
    
     //Calculate for the original trace
     filter.CalcFilters(&trc);
+
+    if(filter.GetTriggers().size() == 0) {
+        cerr << "Couldn't find a trigger...exiting..." << endl;
+        exit(2);
+    }
     
     vector<double> trig = filter.GetTriggerFilter();
     vector<double> esums = filter.GetEnergySums();
@@ -96,10 +103,10 @@ int main(int argc, char* argv[]) {
     double sumL = 20489;
     double sumG = 10040;
     double sumT = 16508;
-    double pE   = 1179;
+    //double pE   = 1179;
 
     double pb = 3780.7283;
-    double pbPerSamp = pb / filterLen;
+    double pbPerSamp = pb / eLen;
 
     vector<double> coeffs = filter.GetEnergyFilterCoefficients();
     double trcEn = filter.GetEnergy();

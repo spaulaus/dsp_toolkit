@@ -41,30 +41,34 @@ using namespace std;
 //----------- Trace Filter Methods -----------
 TraceFilter::TraceFilter(const unsigned int &adc,
                          const TrapFilterParameters &tFilt,
-                         const TrapFilterParameters &eFilt) {
+                         const TrapFilterParameters &eFilt,
+                         const bool &analyzePileup/*=false*/) {
     e_ = eFilt;
     t_ = tFilt;
-    adc_ = adc;
-    loud_ = false;
+    nsPerSample_ = adc;
+    isVerbose_ = false;
+    analyzePileup_ = analyzePileup;
 }
 
 bool TraceFilter::CalcBaseline(void) {
     double l = t_.GetRisetime();
-    int offset = trigPos_ - l - 5;
+    int offset = trigs_[0] - l - 5;
     baseline_ = 0;
 
     for(unsigned int i = 0; i < (unsigned int) offset; i++)
         baseline_ += sig_->at(i);
     baseline_ /= offset;
     
-    if(loud_)
-        cout << "Baseline Calculation : " << endl
+    if(isVerbose_) 
+        cout << "********** CalcBaseline **********" << endl
              << "  Range:" << " Low = 0  High = " << offset << endl
-             << "  Value: " << baseline_ << endl;
+             << "  Value: " << baseline_ << endl << endl;
     return(true);
 }
 
 void TraceFilter::CalcFilters(const vector<double> *sig) {
+    Reset();
+    
     sig_ = sig;
 
     if(!finishedConvert_)
@@ -100,29 +104,29 @@ void TraceFilter::CalcEnergyFilterCoeffs(void) {
     double beta = exp(-1.0/ e_.GetT());
     double cg = 1-beta;
     double ctmp = 1-pow(beta,l);
+    
     coeffs_.push_back(-(cg/ctmp)*pow(beta,l));
     coeffs_.push_back(cg);
     coeffs_.push_back(cg/ctmp);
 
-    if(loud_)
-        cout << "The Energy Filter Coefficients: " << endl
+    if(isVerbose_)
+        cout << "********** CalcEnergyFilterCoeffs **********" << endl
              << "  beta  : " << beta << endl
              << "  CRise : " << coeffs_[0] << endl
              << "  CGap  : " << coeffs_[1] << endl
-             << "  CFall : " << coeffs_[2] << endl;
+             << "  CFall : " << coeffs_[2] << endl << endl;
 }
 
 bool TraceFilter::CalcEnergyFilterLimits(void) {
-    limits_.clear();
     double l = e_.GetRisetime(), g = e_.GetFlattop();
 
-    double p0 = trigPos_-l-10;
+    double p0 = trigs_[0]-l-10;
     double p1 = p0+l-1;
     double p2 = p0+l;
     double p3 = p0+l+g-1;
     double p4 = p0+l+g;
     double p5 = p0+2*l+g-1;
-    double p7 = trigPos_ + l + g;
+    double p7 = trigs_[0] + l + g;
 
     if(p7 > sig_->size()) {
         cerr << "The trigger came too late in the trace! I cannnot perform "
@@ -130,13 +134,14 @@ bool TraceFilter::CalcEnergyFilterLimits(void) {
              << endl;
         return(false);
     }
-
-    if(loud_)
-        cout << "The limits for the Energy filter sums: " << endl
+    
+    if(isVerbose_)
+        cout << "********** CalcEnergyFilterLimits **********" << endl
+             << "The limits for the Energy filter sums: " << endl
              << "  Rise Sum : Low = " << p0 << " High = " << p1 << endl
              << "  Gap Sum  : Low = " << p2 << " High = " << p3 << endl
-             << "  Fall Sum : Low = " << p4 << " High = " << p5 << endl;
-
+             << "  Fall Sum : Low = " << p4 << " High = " << p5 << endl << endl;
+    
     limits_.push_back(p0);      // beginning of  sum E0
     limits_.push_back(p1);      // end of sum E0
     limits_.push_back(p2);      // beginning of gap sum
@@ -147,8 +152,8 @@ bool TraceFilter::CalcEnergyFilterLimits(void) {
 }
 
 bool TraceFilter::CalcTriggerFilter(void) {
-    trigFilter_.clear();
-    trigPos_ = 0;
+    bool hasRecrossed = false;
+
     int l = t_.GetRisetime(), g = t_.GetFlattop();
     for(int i = 0; i < (int)sig_->size(); i++) {
         double sum1 = 0, sum2 = 0;
@@ -157,66 +162,90 @@ bool TraceFilter::CalcTriggerFilter(void) {
                 sum1 += sig_->at(a);
             for(int a = i-l+1; a < i+1; a++)
                 sum2 += sig_->at(a);
-            if((sum2 - sum1)/l >= t_.GetT() && trigPos_ == 0)
-                trigPos_ = i;
+            
+            if((sum2 - sum1)/l >= t_.GetT()) {
+                if(trigs_.size() == 0) 
+                    trigs_.push_back(i);
+                if(hasRecrossed) {
+                    trigs_.push_back(i);
+                    hasRecrossed = false;
+                }
+            }else {
+                if(trigs_.size() != 0)
+                    hasRecrossed = true;
+            }
+            
             trigFilter_.push_back((sum2 - sum1)/l);
         } else
             trigFilter_.push_back(0.0);
     }
-    if(loud_)
-        cout << "The Trigger Position : " << endl << "  " << trigPos_ << endl;
-
-    if(trigPos_ != 0)
+    
+    if(isVerbose_) {
+        cout << "********** CalcTriggerFilter **********" << endl;
+        cout << "The First Trigger Position : " << trigs_[0] << endl;
+        if(trigs_.size() > 1)
+            cout << "There was(were) " << trigs_.size() << " trigger(s) in the trace." << endl;
+        cout << endl;
+    }
+    
+    if(trigs_.size() != 0)
         return(true);
     else
         return(false);
 }
 
 void TraceFilter::ConvertToClockticks(void) {
-    //we should make sure that everything is an integral number of clockticks
-    if(fmod(t_.GetRisetime(),adc_) != 0) {
-        if(loud_)
+    if(fmod(t_.GetRisetime(),nsPerSample_) != 0) {
+        if(isVerbose_)
             cout << "TriggerRisetime is NOT an integer number of samples. Fixing."
                  << endl;
-        t_.SetRisetime(ceil(t_.GetRisetime()*adc_));
+        t_.SetRisetime(ceil(t_.GetRisetime() / nsPerSample_));
     } else
-        t_.SetRisetime(t_.GetRisetime() / adc_);
+        t_.SetRisetime(t_.GetRisetime() / nsPerSample_);
 
-    if(t_.GetRisetime() !=0 && fmod(t_.GetFlattop(),adc_) != 0) {
-        if(loud_)
+    if(t_.GetRisetime() !=0 && fmod(t_.GetFlattop(),nsPerSample_) != 0) {
+        if(isVerbose_)
             cout << "TriggerGap is NOT an integer numnber of samples. Fixing."
                  << endl;
-        t_.SetFlattop(ceil(t_.GetFlattop()*adc_));
+        t_.SetFlattop(ceil(t_.GetFlattop() / nsPerSample_));
     } else
-        t_.SetFlattop(t_.GetFlattop()*adc_);
+        t_.SetFlattop(t_.GetFlattop() / nsPerSample_);
 
-    if(fmod(e_.GetRisetime(),adc_) != 0) {
-        if(loud_)
+    if(fmod(e_.GetRisetime(),nsPerSample_) != 0) {
+        if(isVerbose_)
             cout << "EnergyRisetime is NOT an integer number of samples.  Fixing."
                  << endl;
-        e_.SetRisetime(ceil(e_.GetRisetime()*adc_));
+        e_.SetRisetime(ceil(e_.GetRisetime() / nsPerSample_));
     } else
-        e_.SetRisetime(e_.GetRisetime()*adc_);
+        e_.SetRisetime(e_.GetRisetime() / nsPerSample_);
 
-    if(e_.GetFlattop() != 0 && fmod(e_.GetFlattop(),adc_) != 0) {
-        if(loud_)
+    if(e_.GetFlattop() != 0 && fmod(e_.GetFlattop(),nsPerSample_) != 0) {
+        if(isVerbose_)
             cout << "EnergyGap is NOT an integer numnber of samples. Fixing."
                  << endl;
-        e_.SetFlattop(ceil(e_.GetFlattop()*adc_));
+        e_.SetFlattop(ceil(e_.GetFlattop() / nsPerSample_));
     } else
-        e_.SetFlattop(e_.GetFlattop()*adc_);
+        e_.SetFlattop(e_.GetFlattop() / nsPerSample_);
 
-    //Put tau in units of samples
-    e_.SetT(e_.GetT()*adc_);
+    e_.SetT(e_.GetT() / nsPerSample_);
 
-    if(loud_) {
-        cout << "Here are the used filter parameters: " << endl
-             << "  Fast rise (ns):   " << t_.GetRisetime()*1000/adc_ <<  endl
-             << "  Fast flat (ns):   " << t_.GetFlattop()*1000/adc_ <<  endl
+    if(isVerbose_) {
+        cout << "********** ConvertToClockticks **********" << endl;
+        cout << "Trigger Filter:" << endl
+             << "  RiseTime (ns):   " << t_.GetRisetime()*nsPerSample_ <<  endl
+             << "  Flattop(ns):   " << t_.GetFlattop()*nsPerSample_ <<  endl
              << "  Thresh (ADC units) : " << t_.GetT() << endl
-             << "  Energy rise (ns): " << e_.GetRisetime()*1000/adc_ <<  endl
-             << "  Energy flat (ns): " << e_.GetFlattop()*1000/adc_ <<  endl
-             << "  Tau(ns) :         " << e_.GetT()*1000/adc_ << endl;
+             << "Energy Filter: " << endl
+             << "  Energy rise (ns): " << e_.GetRisetime()*nsPerSample_ <<  endl
+             << "  Energy flat (ns): " << e_.GetFlattop()*nsPerSample_ <<  endl
+             << "  Tau(ns) :         " << e_.GetT()*nsPerSample_ << endl << endl;
     }
     finishedConvert_ = true;
+}
+
+void TraceFilter::Reset(void) {
+    trigFilter_.clear();
+    trigs_.clear();
+    limits_.clear();
+
 }

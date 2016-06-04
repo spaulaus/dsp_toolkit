@@ -34,37 +34,63 @@
 /*! The class to perform the filtering */
 class TraceFilter {
 public:
+    /** Default Constructor */
     TraceFilter(){};
-    TraceFilter(const int &adcSample){adc_ = adcSample;};
-    TraceFilter(const unsigned int &adc, 
+    /** Constructor 
+     * \param [in] nsPerSample : The ns/Sample for the ADC */
+    TraceFilter(const int &nsPerSample){nsPerSample_ = nsPerSample;}
+    /** Constructor 
+     * \param [in] nsPerSample : The ns/Sample for the ADC 
+     * \param [in] tFilt : Parameters for the trigger filter
+     * \param [in] eFilt : Paramters for the energy filter
+     * \param [in] analyzePileup : True if we want additional analysis for pileups. */
+    TraceFilter(const unsigned int &nsPerSample, 
                 const TrapFilterParameters &tFilt,
-                const TrapFilterParameters &eFilt);
-    ~TraceFilter(){};
+                const TrapFilterParameters &eFilt,
+                const bool &analyzePileup = false);
+    /** Default Destructor */
+    ~TraceFilter(){}
+    
+    bool GetHasPileup(void){return(trigs_.size() > 1);}
+    
+    double GetNsPerSample(void){return(nsPerSample_);}
+    double GetBaseline(void){return(baseline_);}
+    double GetEnergy(void){return(energy_);}
 
-    double GetAdcSample(void){return(adc_);};
-    double GetBaseline(void){return(baseline_);};
-    double GetEnergy(void){return(energy_);};
-    unsigned int GetTriggerPosition(void){return(trigPos_);};
-    std::vector<double> GetTriggerFilter(void) {return(trigFilter_);};
-    std::vector<double> GetEnergyFilterCoefficients(void) {return(coeffs_);};
-    std::vector<double> GetEnergySums(void) {return(esums_);};
-    std::vector<unsigned int> GetEnergySumLimits(void){return(limits_);};
+    unsigned int GetNumTriggers(void) {return(trigs_.size());}
+    
+    std::vector<double> GetTriggerFilter(void) {return(trigFilter_);}
+    std::vector<double> GetEnergyFilterCoefficients(void) {return(coeffs_);}
+    std::vector<double> GetEnergySums(void) {return(esums_);}
+
+    std::vector<unsigned int> GetTriggers(void){return(trigs_);}
+    std::vector<unsigned int> GetEnergySumLimits(void){return(limits_);}
 
     void CalcFilters(const std::vector<double> *sig);
-    
-    void SetAdcSample(const double &a){adc_ = a;};
-    void SetSig(const std::vector<double> *sig){sig_ = sig;};
-    void SetVerbose(const bool &a){loud_ = a;};
-private:
-    bool loud_, finishedConvert_;
-    unsigned int adc_, trigPos_;
-    double baseline_, energy_;
+    void SetAdcSample(const double &a){nsPerSample_ = a;}
+    void SetSig(const std::vector<double> *sig){sig_ = sig;}
+    void SetVerbose(const bool &a){isVerbose_ = a;}
 
-    TrapFilterParameters e_, t_;
+private:
+    bool isVerbose_;
+    bool finishedConvert_;
+    bool analyzePileup_;
+
+    double baseline_;
+    double energy_;
+
+    unsigned int nsPerSample_;
+
+    TrapFilterParameters e_;
+    TrapFilterParameters t_;
     
     const std::vector<double> *sig_;
-    std::vector<double> coeffs_, trigFilter_, esums_;
+    std::vector<double> coeffs_;
+    std::vector<double> trigFilter_;
+    std::vector<double> esums_;
+    
     std::vector<unsigned int> limits_;
+    std::vector<unsigned int> trigs_;
     
     bool CalcBaseline(void); 
     bool CalcEnergyFilterLimits(void);
@@ -72,6 +98,8 @@ private:
 
     void CalcEnergyFilterCoeffs(void);
     void CalcEnergyFilter(void);
+    void CheckIfPileup(void);
     void ConvertToClockticks(void);
+    void Reset(void);
 };
 #endif //__TRACEFILTER_HPP__
