@@ -38,15 +38,15 @@
 
 using namespace std;
 
-//----------- Trace Filter Methods -----------
 TraceFilter::TraceFilter(const unsigned int &adc,
                          const TrapFilterParameters &tFilt,
                          const TrapFilterParameters &eFilt,
-                         const bool &analyzePileup/*=false*/) {
+                         const bool &analyzePileup/*=false*/,
+                         const bool &verbose/*= false*/) {
     e_ = eFilt;
     t_ = tFilt;
     nsPerSample_ = adc;
-    isVerbose_ = false;
+    isVerbose_ = verbose;
     analyzePileup_ = analyzePileup;
 }
 

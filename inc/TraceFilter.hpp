@@ -43,11 +43,13 @@ public:
      * \param [in] nsPerSample : The ns/Sample for the ADC 
      * \param [in] tFilt : Parameters for the trigger filter
      * \param [in] eFilt : Paramters for the energy filter
-     * \param [in] analyzePileup : True if we want additional analysis for pileups. */
+     * \param [in] analyzePileup : True if we want additional analysis for pileups. 
+     * \param [in] verbose : True if we want verbose output for filter */
     TraceFilter(const unsigned int &nsPerSample, 
                 const TrapFilterParameters &tFilt,
                 const TrapFilterParameters &eFilt,
-                const bool &analyzePileup = false);
+                const bool &analyzePileup = false,
+                const bool &verbose = false);
     /** Default Destructor */
     ~TraceFilter(){}
 
