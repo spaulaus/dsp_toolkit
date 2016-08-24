@@ -115,16 +115,16 @@ void TraceFilter::CalcEnergyFilter(void) {
     double partA = 0, partB = 0, partC = 0;
 
     for(unsigned int i = limits_[0]; i < limits_[1]; i++)
-        partA += sig_->at(i);
+        partA += sig_->at(i) - baseline_;
     for(unsigned int i = limits_[2]; i < limits_[3]; i++)
-        partB += sig_->at(i);
+        partB += sig_->at(i) - baseline_;
     for(unsigned int i = limits_[4]; i < limits_[5]; i++)
-        partC += sig_->at(i);
+        partC += sig_->at(i) - baseline_;
     esums_.push_back(partA);
     esums_.push_back(partB);
     esums_.push_back(partC);
 
-    en_.push_back(coeffs_[0]*partA + coeffs_[1]*partB + coeffs_[2]*partC - baseline_);
+    en_.push_back(coeffs_[0]*partA + coeffs_[1]*partB + coeffs_[2]*partC);
     if(isVerbose_)
         cout << "********** CalcEnergyFilter **********" << endl
              << "Calculated Energy : " << en_.back() << endl << endl;
