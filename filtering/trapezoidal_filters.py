@@ -8,7 +8,6 @@ from math import exp
 from statistics import mean
 
 
-
 def calculate_baseline(data, trigger, length):
     offset = trigger - length - 5
     if offset < 0:
@@ -63,20 +62,14 @@ def calculate_energy_filter(data, length, gap, baseline, coefficients):
         raise ValueError(f"The data length({len(data)}) is too small for the requested filter "
                          f"size ({offset})!")
 
+    data_no_baseline = [x - baseline for x in data]
     response = [0] * len(data)
-    for x in range(offset, len(data)):
-        esumL = [0] * len(data)
-        for y in range(x - offset, x - offset + length):
-            esumL[x] = esumL[x] + data[y] - baseline
-        esumG = [0] * len(data)
-        for y in range(x - offset + length, x - offset + length + gap):
-            esumG[x] = esumG[x] + data[y] - baseline
-        esumF = [0] * len(data)
-        for y in range(x - offset + length + gap, x - offset + 2 * length + gap):
-            esumF[x] = esumF[x] + data[y] - baseline
-
-        response[x] = coefficients['rise'] * esumL[x] + coefficients['gap'] * esumG[x] + \
-                      coefficients['fall'] * esumF[x]
+    for x in range(offset, len(data_no_baseline)):
+        esumL = sum(data_no_baseline[x - offset:x - offset + length])
+        esumG = sum(data_no_baseline[x - offset + length: x - offset + length + gap])
+        esumF = sum(data_no_baseline[x - offset + length + gap: x - offset + 2 * length + gap])
+        response[x] = coefficients['rise'] * esumL + coefficients['gap'] * esumG + coefficients[
+            'fall'] * esumF
 
     for x in range(0, offset):
         response[x] = response[offset]
@@ -114,4 +107,37 @@ def calculate_trigger_filter(data, length, gap, threshold):
     return triggers, trigger_filter
 
 
+if __name__ == '__main__':
+    from pandas import DataFrame
+    import matplotlib.pyplot as plt
+    from sample_data import sample_traces as st
 
+    signal = st.plastic_scintillator
+
+    trig_params = {"l": 15, "g": 5, "t": 10}
+    triggers, trigger_filter = calculate_trigger_filter(signal, trig_params['l'],
+                                                        trig_params['g'], trig_params['t'])
+    baseline = calculate_baseline(signal, triggers[0], trig_params['l'])
+
+    energy_params = {"l": 10, "g": 5, "t": 2.5}
+    energy_filter_coefficients = calculate_energy_filter_coefficients(energy_params['l'],
+                                                                      energy_params['t'])
+    energy = calculate_energy(signal, baseline, energy_filter_coefficients,
+                              calculate_energy_filter_limits(triggers[0], energy_params['l'],
+                                                             energy_params['g'], len(signal)))
+    energy_filter = calculate_energy_filter(signal, energy_params['l'],
+                                            energy_params['g'], baseline,
+                                            energy_filter_coefficients)
+
+    ax = plt.gca()
+    ax.set(xlabel="Bin", ylabel='Adc Units / Bin', title=f"Calculated energy: {round(energy, 2)}")
+    DataFrame(signal, columns=['Data']).plot(ax=ax)
+    DataFrame(trigger_filter, columns=['Trigger Filter']).plot(ax=ax)
+    DataFrame(energy_filter, columns=["Energy Filter"]).plot(ax=ax)
+    for trigger in triggers:
+        plt.axvline(x=trigger, color='purple', label="Trigger")
+    plt.hlines(y=baseline, xmin=triggers[0] - 10, xmax=len(signal), colors='red',
+               label="Baseline")
+    ax.legend(loc='best')
+    ax.set_xlim([round(0.75 * triggers[0]), len(signal)])
+    ax.get_figure().show()
