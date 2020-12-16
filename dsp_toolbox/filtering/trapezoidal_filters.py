@@ -110,7 +110,7 @@ def calculate_trigger_filter(data, length, gap, threshold):
 if __name__ == '__main__':
     from pandas import DataFrame
     import matplotlib.pyplot as plt
-    from sample_data import sample_traces as st
+    from dsp_toolbox.sample_data import sample_traces as st
 
     signal = st.plastic_scintillator
 
