@@ -1,4 +1,0 @@
-1. Clean things up so that I can output both the energy and a vector
-   containing the actual filter signal.
-2. Do the baseline calculation as the trap filter or as the sum that I currently have?
-3. Create static variable for the baseline calculation to compare to BLCUT?
