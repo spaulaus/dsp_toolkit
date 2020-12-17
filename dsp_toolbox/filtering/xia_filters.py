@@ -7,6 +7,7 @@ date: December 14, 2020
 from math import exp
 from statistics import mean
 
+
 # TODO: Add the esums to the output!
 
 def calculate_baseline(data, trigger, length):
@@ -50,7 +51,7 @@ def calculate_energy(data, baseline, coefficients, limits):
     sum_fall = sum(data_without_baseline[limits['fall'][0]: limits['fall'][1]])
 
     return coefficients['rise'] * sum_rise + coefficients['gap'] * sum_gap + coefficients[
-        'fall'] * sum_fall
+        'fall'] * sum_fall, {'rising_sum': sum_rise, 'gap_sum': sum_gap, 'falling_sum': sum_fall}
 
 
 def calculate_energy_filter(data, length, gap, baseline, coefficients):
@@ -123,9 +124,11 @@ if __name__ == '__main__':
     energy_params = {"l": 10, "g": 5, "t": 2.5}
     energy_filter_coefficients = calculate_energy_filter_coefficients(energy_params['l'],
                                                                       energy_params['t'])
-    energy = calculate_energy(signal, baseline, energy_filter_coefficients,
-                              calculate_energy_filter_limits(triggers[0], energy_params['l'],
-                                                             energy_params['g'], len(signal)))
+    energy, energy_sums = calculate_energy(signal, baseline, energy_filter_coefficients,
+                                           calculate_energy_filter_limits(triggers[0],
+                                                                          energy_params['l'],
+                                                                          energy_params['g'],
+                                                                          len(signal)))
     energy_filter = calculate_energy_filter(signal, energy_params['l'],
                                             energy_params['g'], baseline,
                                             energy_filter_coefficients)
