@@ -7,6 +7,7 @@ date: December 14, 2020
 from math import exp
 from statistics import mean
 
+# TODO: Add the esums to the output!
 
 def calculate_baseline(data, trigger, length):
     offset = trigger - length - 5
