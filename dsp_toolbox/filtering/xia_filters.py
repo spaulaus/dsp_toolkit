@@ -7,6 +7,8 @@ date: December 14, 2020
 from math import exp
 from statistics import mean
 
+from dsp_toolbox.filtering.filters import calculate_trapezoidal_filter
+
 
 # TODO: Add the esums to the output!
 
@@ -85,23 +87,18 @@ def calculate_trigger_filter(data, length, gap, threshold):
 
     has_recrossed = False
     triggers = list()
-    trigger_filter = list()
-    for i in range(0, len(data)):
-        if i - 2 * length - gap + 1 >= 0:
-            trigger_filter.append((sum(data[i - length + 1: i + 1]) - sum(
-                data[i - 2 * length - gap + 1: i - length - gap + 1])) / length)
+    trigger_filter = calculate_trapezoidal_filter(data, length, gap)
 
-            if trigger_filter[-1] >= threshold:
-                if not triggers:
-                    triggers.append(i)
-                if has_recrossed:
-                    triggers.append(i)
-                    has_recrossed = False
-            else:
-                if triggers:
-                    has_recrossed = True
+    for val in trigger_filter:
+        if val >= threshold:
+            if not triggers:
+                triggers.append(trigger_filter.index(val))
+            if has_recrossed:
+                triggers.append(trigger_filter.index(val))
+                has_recrossed = False
         else:
-            trigger_filter.append(0.0)
+            if triggers:
+                has_recrossed = True
 
     if not triggers:
         raise ValueError("No triggers found in the provided data!")
