@@ -1,5 +1,5 @@
 """
-file: trapezoidal_filters.py
+file: xia_filters.py
 brief:
 author: S. V. Paulauskas
 date: December 14, 2020

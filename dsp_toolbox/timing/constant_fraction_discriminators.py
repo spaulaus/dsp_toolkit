@@ -61,8 +61,8 @@ if __name__ == '__main__':
     from pandas import DataFrame
     import matplotlib.pyplot as plt
     from dsp_toolbox.sample_data import sample_traces as st
-    from dsp_toolbox.filtering.trapezoidal_filters import (calculate_baseline,
-                                                           calculate_trigger_filter)
+    from dsp_toolbox.filtering.xia_filters import (calculate_baseline,
+                                                   calculate_trigger_filter)
 
     signal = st.csi
     filter_triggers, trig_filter = calculate_trigger_filter(signal, 40, 10, 10)
