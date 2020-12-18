@@ -16,3 +16,21 @@ def calculate_trapezoidal_filter(data, length, gap):
             data[i - 2 * length - gap + 1: i - length - gap])) / length)
 
     return trap_filter
+
+
+def calculate_rc_lowpass_filter(data, time_constant, time_interval):
+    """
+    This code can be found at https://en.wikipedia.org/wiki/Low-pass_filter
+    :param data: 
+    :param time_constant: 
+    :param time_interval: 
+    :return: 
+    """
+    result = [0] * len(data)
+    alpha = time_interval / (time_constant + time_interval)
+    result[0] = alpha * data[0]
+
+    for i in range(1, len(data)):
+        result[i] = result[i - 1] + alpha * (data[i] - result[i - 1])
+
+    return result
