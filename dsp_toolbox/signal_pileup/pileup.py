@@ -10,11 +10,25 @@ from random import uniform, gauss
 from numpy import arange
 
 
+def calculate_pileup_probability(rate, length, gap):
+    """
+    Equation taken from the following paper.
+    https://dx.doi.org/10.1016/j.nima.2007.05.323
+
+    :param rate: The detector rate in seconds
+    :param length: The filter length in seconds
+    :param gap: The filter gap in seconds.
+    :return:
+    """
+    x = rate * (2 * length + gap)
+    return (1 + x) * (1 - exp(-2 * x))
+
+
 def signal_function(t, rise_time, decay_time):
     """
-    :param t:
-    :param rise_time:
-    :param decay_time:
+    :param t: The signal time in seconds
+    :param rise_time: The signal rise time in seconds.
+    :param decay_time: The signal decay time in seconds.
     :return:
     """
     if t < 0:
@@ -33,8 +47,11 @@ def model_rectangular_pulses(energy1, energy2, cfg):
     """
     if cfg['sampling_interval'] <= cfg['filter']['gap']:
         return energy1 + energy2
-    if cfg['filter']['gap'] < cfg['sampling_interval'] <= cfg['filter']['length'] + cfg['filter']['gap']:
-        return energy1 + energy2 * (1. - (cfg['sampling_interval'] - cfg['filter']['gap']) / cfg['filter']['length'])
+    if cfg['filter']['gap'] < cfg['sampling_interval'] <= cfg['filter']['length'] + cfg['filter'][
+        'gap']:
+        return energy1 + energy2 * (
+                1. - (cfg['sampling_interval'] - cfg['filter']['gap']) / cfg['filter'][
+            'length'])
     return 0.0
 
 
@@ -48,17 +65,21 @@ def model_trapezoidal_pulses(energy1, energy2, cfg):
     if cfg['sampling_interval'] <= cfg['filter']['gap'] - cfg['signal']['rise_time']:
         # Second pulse rises fully inside gap
         return energy1 + energy2
-    if cfg['filter']['gap'] - cfg['signal']['rise_time'] < cfg['sampling_interval'] <= cfg['filter']['gap']:
+    if cfg['filter']['gap'] - cfg['signal']['rise_time'] < cfg['sampling_interval'] <= \
+            cfg['filter']['gap']:
         # Second pulse rises between gap and filter risetime
         x = cfg['sampling_interval'] + cfg['signal']['rise_time'] - cfg['filter']['gap']
         y = x * energy2 / cfg['signal']['rise_time']
         a = x * y / 2
         return energy1 + (energy2 * cfg['filter']['length'] - a) / cfg['filter']['length']
-    if cfg['filter']['gap'] < cfg['sampling_interval'] <= cfg['filter']['gap'] + cfg['filter']['length'] - cfg['signal']['rise_time']:
+    if cfg['filter']['gap'] < cfg['sampling_interval'] <= cfg['filter']['gap'] + cfg['filter'][
+        'length'] - cfg['signal']['rise_time']:
         # Second pulse rises fully inside the peak
-        return energy1 + (cfg['filter']['length'] + cfg['filter']['gap'] - cfg['sampling_interval'] - 0.5
-                          * cfg['signal']['rise_time']) * energy2 / cfg['filter']['length']
-    if cfg['filter']['gap'] + cfg['filter']['length'] - cfg['signal']['rise_time'] < cfg['sampling_interval'] <= cfg['filter']['gap'] + cfg['filter']['length']:
+        return energy1 + (
+                cfg['filter']['length'] + cfg['filter']['gap'] - cfg['sampling_interval'] - 0.5
+                * cfg['signal']['rise_time']) * energy2 / cfg['filter']['length']
+    if cfg['filter']['gap'] + cfg['filter']['length'] - cfg['signal']['rise_time'] < cfg[
+        'sampling_interval'] <= cfg['filter']['gap'] + cfg['filter']['length']:
         # Second pulse rises at the end of the peak
         x = cfg['filter']['length'] + cfg['filter']['gap'] - cfg['sampling_interval']
         y = x * energy2 / cfg['signal']['rise_time']
@@ -74,8 +95,12 @@ def model_arbitrary_pulse_shape(energy1, energy2, cfg):
     """
     integral = 0
     normalization = 0
-    for t in arange(cfg['filter']['gap'], cfg['filter']['length'] + cfg['filter']['gap'], cfg['sampling_interval']):
-        integral = integral + energy1 * signal_function(t, cfg['signal']['rise_time'], cfg['signal']['decay_time']) + energy2 * signal_function(t - cfg['sampling_interval'], cfg['signal']['rise_time'], cfg['signal']['decay_time'])
+    for t in arange(cfg['filter']['gap'], cfg['filter']['length'] + cfg['filter']['gap'],
+                    cfg['sampling_interval']):
+        integral = integral + energy1 * signal_function(t, cfg['signal']['rise_time'],
+                                                        cfg['signal'][
+                                                            'decay_time']) + energy2 * signal_function(
+            t - cfg['sampling_interval'], cfg['signal']['rise_time'], cfg['signal']['decay_time'])
         normalization = normalization + 1
     return integral / normalization
 
@@ -141,6 +166,8 @@ if __name__ == '__main__':
             "tau": 0.86e-6
         }
     }
+
+    print(calculate_pileup_probability(configuration['event_rate'], configuration['filter']['length'], configuration['filter']['gap']))
 
     signal, pileup = generate_pileups(model_xia_pixie16_filter, configuration)
 
