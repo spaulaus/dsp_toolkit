@@ -4,10 +4,10 @@ brief:
 author: S. V. Paulauskas
 date: December 18, 2020
 """
-from math import exp, log
+from math import exp
 from random import uniform, gauss
 
-from numpy import arange
+from numpy import arange, unique, random
 
 
 def calculate_pileup_probability(rate, length, gap):
@@ -130,14 +130,18 @@ def model_xia_pixie16_filter(energy1, energy2, cfg):
     return Cg * gap_sum + C1 * fall_sum
 
 
-def generate_pileups(model, cfg):
+def generate_pileups(cfg, model, distribution, weights=None):
     signal = list()
     pileup = list()
+
+    choices, counts = unique([round(x) for x in distribution], return_counts=True)
+    if not weights:
+        weights = [x / sum(counts) for x in counts]
+
     while cfg['number_of_events'] > 0:
-        signal.append(gauss(10, 1.5))
-        energy2 = signal[-1] + uniform(-1, 1)
-        if -log(1. - uniform(0, 1)) / cfg['event_rate'] <= cfg['filter']['length'] + cfg['filter'][
-            'gap']:
+        signal.append(random.choice(choices, 1, p=weights)[0] + uniform(0, 1))
+        energy2 = round(signal[-1], 0) + uniform(0, 1)
+        if uniform(0, 1) < configuration['pileup_probability']:
             pileup.append(model(signal[-1], energy2, cfg))
             cfg['number_of_events'] = cfg['number_of_events'] - 1
         else:
@@ -152,7 +156,7 @@ if __name__ == '__main__':
 
     # All times are expected to be in seconds.
     configuration = {
-        "event_rate": 4.16e4,
+        "event_rate": 20000,
         "number_of_events": 10000,
         "sampling_interval": 10.e-9,
         "signal": {
@@ -167,9 +171,14 @@ if __name__ == '__main__':
         }
     }
 
-    print(calculate_pileup_probability(configuration['event_rate'], configuration['filter']['length'], configuration['filter']['gap']))
+    configuration.setdefault('pileup_probability',
+                             calculate_pileup_probability(configuration['event_rate'],
+                                                          configuration['filter']['length'],
+                                                          configuration['filter']['gap']))
 
-    signal, pileup = generate_pileups(model_xia_pixie16_filter, configuration)
+    distribution = [gauss(15, 1.5) for x in range(0, configuration['event_rate'])]
+
+    signal, pileup = generate_pileups(configuration, model_xia_pixie16_filter, distribution)
 
     ax = plt.gca()
     ax.set(xlabel="Energy (arb)", ylabel='Energy (arb) / bin', title=f"Pileup simulation")
