@@ -15,6 +15,9 @@ def calculate_pileup_probability(rate, length, gap):
     Equation taken from the following paper.
     https://dx.doi.org/10.1016/j.nima.2007.05.323
 
+    In the case of XIA's Pixie-16 modules, we don't have pre-pileup. The first signal would
+    presumably be our trigger in this situation. That means we only have post-pileup.
+
     :param rate: The detector rate in seconds
     :param length: The filter length in seconds
     :param gap: The filter gap in seconds.
@@ -140,13 +143,15 @@ def generate_pileups(cfg, model, distribution, weights=None):
 
     while cfg['number_of_events'] > 0:
         signal.append(random.choice(choices, 1, p=weights)[0] + uniform(0, 1))
-        energy2 = round(signal[-1], 0) + uniform(0, 1)
+        energy2 = random.choice(choices, 1, p=weights)[0] + uniform(0, 1)
         if uniform(0, 1) < configuration['pileup_probability']:
             pileup.append(model(signal[-1], energy2, cfg))
             cfg['number_of_events'] = cfg['number_of_events'] - 1
         else:
             signal.append(energy2)
             cfg['number_of_events'] = cfg['number_of_events'] - 2
+
+    print(len(signal), len(pileup))
     return signal, pileup
 
 
@@ -183,7 +188,8 @@ if __name__ == '__main__':
     ax = plt.gca()
     ax.set(xlabel="Energy (arb)", ylabel='Energy (arb) / bin', title=f"Pileup simulation")
     ax.set_yscale('log')
-    DataFrame(signal, columns=["signal"]).hist(bins=30, range=[0, 30], ax=ax, alpha=0.75).flatten()[
+    bins = 50
+    DataFrame(signal, columns=["signal"]).hist(bins=bins, range=[0, bins], ax=ax).flatten()[
         0].get_figure().show()
-    DataFrame(pileup, columns=["pileup"]).hist(bins=30, range=[0, 30], ax=ax, alpha=0.75).flatten()[
-        0].get_figure().show()
+    DataFrame(pileup, columns=["pileup"]).hist(bins=bins, range=[0, bins], ax=ax,
+                                               alpha=0.5).flatten()[0].get_figure().show()
