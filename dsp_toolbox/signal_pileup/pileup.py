@@ -4,7 +4,7 @@ brief:
 author: S. V. Paulauskas
 date: December 18, 2020
 """
-from math import exp
+from math import exp, log
 from random import uniform, gauss
 
 from numpy import arange, unique, random
@@ -21,7 +21,7 @@ def calculate_pileup_probability(rate, length, gap):
     :param rate: The detector rate in seconds
     :param length: The filter length in seconds
     :param gap: The filter gap in seconds.
-    :return:
+    :return: The expected probability of a pileup
     """
     x = rate * (2 * length + gap)
     return (1 + x) * (1 - exp(-2 * x))
@@ -32,7 +32,7 @@ def signal_function(t, rise_time, decay_time):
     :param t: The signal time in seconds
     :param rise_time: The signal rise time in seconds.
     :param decay_time: The signal decay time in seconds.
-    :return:
+    :return: The signal at time t
     """
     if t < 0:
         return 0
@@ -41,60 +41,86 @@ def signal_function(t, rise_time, decay_time):
     return exp(-(t - rise_time) / decay_time)
 
 
-def model_rectangular_pulses(energy1, energy2, cfg):
+def model_rectangular_pulses(pileup_time, energy1, energy2, cfg):
     """
-    :param cfg:
-    :param energy1:
-    :param energy2:
-    :return:
+    Models the pileup energy using a rectangular pulse. Depends on the following parameters:
+        * Filter gap or flat top in seconds
+        * Filter length or rise time in seconds
+
+    :param pileup_time: The time that the pile-up occurred in seconds
+    :param energy1: The energy of the first signal we had.
+    :param energy2: The energy of the piled-up signal
+    :param cfg: The configuration containing all necessary parameters.
+    :return: The piled up energy
     """
-    if cfg['sampling_interval'] <= cfg['filter']['gap']:
+    if pileup_time <= cfg['filter']['gap']:
         return energy1 + energy2
-    if cfg['filter']['gap'] < cfg['sampling_interval'] <= cfg['filter']['length'] + cfg['filter'][
-        'gap']:
+    if cfg['filter']['gap'] < pileup_time <= cfg['filter']['length'] + cfg['filter']['gap']:
         return energy1 + energy2 * (
-                1. - (cfg['sampling_interval'] - cfg['filter']['gap']) / cfg['filter'][
-            'length'])
+                1. - (pileup_time - cfg['filter']['gap']) / cfg['filter']['length'])
     return 0.0
 
 
-def model_trapezoidal_pulses(energy1, energy2, cfg):
+def model_trapezoidal_pulses(pileup_time, energy1, energy2, cfg):
     """
-    :param cfg:
-    :param energy1:
-    :param energy2:
-    :return:
+    Models the pileup energy based on a trapezoidal filter. We have 4 scenarios for the pileup.
+    The final energy depends on when the pileup signal peaks:
+        1. fully inside the gap of the first signal,
+        2. between the gap and the rise time of the first signal,
+        3. fully inside the first signal's peak,
+        4. or at the end of the first signal's peak.
+
+    Depends on the following parameters:
+        * Filter gap or flat top in seconds
+        * Filter length or rise time in seconds
+        * Signal rise time in seconds
+
+    :param pileup_time: The time that the pile-up occurred in seconds
+    :param energy1: The energy of the first signal we had.
+    :param energy2: The energy of the piled-up signal
+    :param cfg: The configuration containing all necessary parameters.
+    :return: The piled up energy
     """
-    if cfg['sampling_interval'] <= cfg['filter']['gap'] - cfg['signal']['rise_time']:
+    if pileup_time <= cfg['filter']['gap'] - cfg['signal']['rise_time']:
         # Second pulse rises fully inside gap
         return energy1 + energy2
-    if cfg['filter']['gap'] - cfg['signal']['rise_time'] < cfg['sampling_interval'] <= \
-            cfg['filter']['gap']:
+    if cfg['filter']['gap'] - cfg['signal']['rise_time'] < pileup_time <= cfg['filter']['gap']:
         # Second pulse rises between gap and filter risetime
-        x = cfg['sampling_interval'] + cfg['signal']['rise_time'] - cfg['filter']['gap']
+        x = pileup_time + cfg['signal']['rise_time'] - cfg['filter']['gap']
         y = x * energy2 / cfg['signal']['rise_time']
         a = x * y / 2
         return energy1 + (energy2 * cfg['filter']['length'] - a) / cfg['filter']['length']
-    if cfg['filter']['gap'] < cfg['sampling_interval'] <= cfg['filter']['gap'] + cfg['filter'][
+    if cfg['filter']['gap'] < pileup_time <= cfg['filter']['gap'] + cfg['filter'][
         'length'] - cfg['signal']['rise_time']:
         # Second pulse rises fully inside the peak
         return energy1 + (
-                cfg['filter']['length'] + cfg['filter']['gap'] - cfg['sampling_interval'] - 0.5
+                cfg['filter']['length'] + cfg['filter']['gap'] - pileup_time - 0.5
                 * cfg['signal']['rise_time']) * energy2 / cfg['filter']['length']
-    if cfg['filter']['gap'] + cfg['filter']['length'] - cfg['signal']['rise_time'] < cfg[
-        'sampling_interval'] <= cfg['filter']['gap'] + cfg['filter']['length']:
+    if cfg['filter']['gap'] + cfg['filter']['length'] - cfg['signal']['rise_time'] < pileup_time <= \
+            cfg['filter']['gap'] + cfg['filter']['length']:
         # Second pulse rises at the end of the peak
-        x = cfg['filter']['length'] + cfg['filter']['gap'] - cfg['sampling_interval']
+        x = cfg['filter']['length'] + cfg['filter']['gap'] - pileup_time
         y = x * energy2 / cfg['signal']['rise_time']
         return energy1 + x * y * 0.5 / cfg['filter']['length']
 
 
-def model_arbitrary_pulse_shape(energy1, energy2, cfg):
+def model_arbitrary_pulse_shape(pileup_time, energy1, energy2, cfg):
     """
-    :param cfg:
-    :param energy1:
-    :param energy2:
-    :return:
+    This signal is arbitrary in the sense that it has a rise time and a single exponential decay.
+    It does not mean any arbitrary shape. We use a basic summing integration to figure out
+    the pile-up energy.
+
+    Depends on the following parameters:
+        * Filter gap or flat top in seconds
+        * Filter length or rise time in seconds
+        * Signal rise time in seconds
+        * Digitizer sampling interval in seconds. Ex. 100 MHz -> 10e-9 s
+
+    :param pileup_time: The time that the pile-up occurred in seconds
+    :param energy1: The energy of the first signal we had.
+    :param energy2: The energy of the piled-up signal
+    :param cfg: The configuration containing all necessary parameters.
+    :return: The piled up energy
     """
     integral = 0
     normalization = 0
@@ -103,25 +129,39 @@ def model_arbitrary_pulse_shape(energy1, energy2, cfg):
         integral = integral + energy1 * signal_function(t, cfg['signal']['rise_time'],
                                                         cfg['signal'][
                                                             'decay_time']) + energy2 * signal_function(
-            t - cfg['sampling_interval'], cfg['signal']['rise_time'], cfg['signal']['decay_time'])
+            t - pileup_time, cfg['signal']['rise_time'], cfg['signal']['decay_time'])
         normalization = normalization + 1
     return integral / normalization
 
 
-def model_xia_pixie16_filter(energy1, energy2, cfg):
+def model_xia_pixie16_filter(pileup_time, energy1, energy2, cfg):
     """
-    :param cfg:
-    :param energy1:
-    :param energy2:
-    :return:
+    Simulates piled up events based on XIA's Pixie-16 Energy filter sums. These sums are basically
+    a trapezoidal filter. The filter sums are multiplied by coefficients to take into account
+    signals sitting on the tail of the previous pulse. See
+    https://doi.org/10.1109/NSSMIC.2008.4774600 for more information.
+
+    Depends on the following parameters:
+        * Filter gap or flat top in seconds
+        * Filter length or rise time in seconds
+        * Filter tau in seconds
+        * Signal rise time in seconds
+        * Signal decay time in seconds
+        * Digitizer sampling interval in seconds. Ex. 100 MHz -> 10e-9 s
+
+    :param pileup_time: The time that the pile-up occurred in seconds
+    :param energy1: The energy of the first signal we had.
+    :param energy2: The energy of the piled-up signal
+    :param cfg: The configuration containing all necessary parameters.
+    :return: The piled up energy
     """
     gap_sum = sum([energy1 * signal_function(t, cfg['signal']['rise_time'], cfg['signal'][
-        'decay_time']) + energy2 * signal_function(t - cfg['sampling_interval'],
+        'decay_time']) + energy2 * signal_function(t - pileup_time,
                                                    cfg['signal']['rise_time'],
                                                    cfg['signal']['decay_time']) for t in
                    arange(0, cfg['filter']['gap'], cfg['sampling_interval'])])
     fall_sum = sum([energy1 * signal_function(t, cfg['signal']['rise_time'], cfg['signal'][
-        'decay_time']) + energy2 * signal_function(t - cfg['sampling_interval'],
+        'decay_time']) + energy2 * signal_function(t - pileup_time,
                                                    cfg['signal']['rise_time'],
                                                    cfg['signal']['decay_time']) for t in
                     arange(cfg['filter']['gap'], cfg['filter']['length'] + cfg['filter']['gap'],
@@ -134,6 +174,24 @@ def model_xia_pixie16_filter(energy1, energy2, cfg):
 
 
 def generate_pileups(cfg, model, distribution, weights=None):
+    """
+    Main driver to generate pile-up events. We take the information from the config file for use
+    with calculating our pileup times and energies. We take in a distribution, which we sample in
+    order to generate the energies in our spectrum. If we are given weights we'll use those weights
+    to weigh the energy distribution, if we don't have weights, we'll calculate them. The length of
+    the distribution and weight lists must be the same.
+
+    All times in the configuration file are expected to be in seconds!
+
+    :param cfg: The configuration file containing
+    :param model:
+    :param distribution:
+    :param weights:
+    :return:
+    """
+    if weights and len(distribution) != len(weights):
+        raise ValueError("The energy distribution and its weights must be the same length!")
+
     signal = list()
     pileup = list()
 
@@ -144,13 +202,14 @@ def generate_pileups(cfg, model, distribution, weights=None):
     while cfg['number_of_events'] > 0:
         signal.append(random.choice(choices, 1, p=weights)[0] + uniform(0, 1))
         energy2 = random.choice(choices, 1, p=weights)[0] + uniform(0, 1)
-        if uniform(0, 1) < configuration['pileup_probability']:
-            pileup.append(model(signal[-1], energy2, cfg))
+
+        time = -log(1. - uniform(0, 1)) / cfg['event_rate']
+        if time <= cfg['filter']['length'] + cfg['filter']['gap']:
+            pileup.append(model(time, signal[-1], energy2, cfg))
             cfg['number_of_events'] = cfg['number_of_events'] - 1
         else:
             signal.append(energy2)
             cfg['number_of_events'] = cfg['number_of_events'] - 2
-
     print(len(signal), len(pileup))
     return signal, pileup
 
