@@ -219,8 +219,8 @@ if __name__ == '__main__':
 
     # All times are expected to be in seconds.
     configuration = {
-        "event_rate": 20000,
-        "number_of_events": 10000,
+        "event_rate": 41600,
+        "number_of_events": 1000000,
         "sampling_interval": 10.e-9,
         "signal": {
             # Parameters for CsI(Na)
@@ -234,13 +234,13 @@ if __name__ == '__main__':
         }
     }
 
-    distribution = [gauss(15, 1.5) for x in range(0, configuration['event_rate'])]
+    distribution = [gauss(100, 1) for x in range(0, configuration['event_rate'])]
     signal, pileup = generate_pileups(configuration, model_xia_pixie16_filter, distribution)
 
     ax = plt.gca()
     ax.set(xlabel="Energy (arb)", ylabel='Energy (arb) / bin', title=f"Pileup simulation")
     ax.set_yscale('log')
-    bins = 800
+    bins = 300
     DataFrame(signal, columns=["signal"]).hist(bins=bins, range=[0, bins], ax=ax).flatten()[
         0].get_figure().show()
     DataFrame(pileup, columns=["pileup"]).hist(bins=bins, range=[0, bins], ax=ax,
