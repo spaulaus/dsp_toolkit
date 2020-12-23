@@ -107,7 +107,6 @@ def calculate_trigger_filter(data, length, gap, threshold):
 
 
 if __name__ == '__main__':
-    from pandas import DataFrame
     import matplotlib.pyplot as plt
     from dsp_toolbox.sample_data import sample_traces as st
 
@@ -130,15 +129,16 @@ if __name__ == '__main__':
                                             energy_params['g'], baseline,
                                             energy_filter_coefficients)
 
-    ax = plt.gca()
-    ax.set(xlabel="Bin", ylabel='Adc Units / Bin', title=f"Calculated energy: {round(energy, 2)}")
-    DataFrame(signal, columns=['Data']).plot(ax=ax)
-    DataFrame(trigger_filter, columns=['Trigger Filter']).plot(ax=ax)
-    DataFrame(energy_filter, columns=["Energy Filter"]).plot(ax=ax)
+    plt.plot(signal, label="Data")
+    plt.plot(trigger_filter, label="Trigger Filter")
+    plt.plot(energy_filter, label="Energy Filter")
     for trigger in triggers:
         plt.axvline(x=trigger, color='purple', label="Trigger")
     plt.hlines(y=baseline, xmin=triggers[0] - 10, xmax=len(signal), colors='red',
                label="Baseline")
-    ax.legend(loc='best')
-    ax.set_xlim([round(0.75 * triggers[0]), len(signal)])
-    ax.get_figure().show()
+    plt.legend()
+    plt.xlabel("Bin")
+    plt.ylabel('Adc Units / Bin')
+    plt.title(f"Calculated energy: {round(energy, 2)}")
+    plt.xlim([round(0.75 * triggers[0]), len(signal)])
+    plt.show()
