@@ -5,7 +5,7 @@ author: S. V. Paulauskas
 date: December 18, 2020
 """
 from math import exp, log
-from random import uniform, gauss
+from random import uniform
 
 from numpy import arange, unique, random
 
@@ -187,34 +187,33 @@ def generate_pileups(cfg, model, distribution, weights=None):
     :param model:
     :param distribution:
     :param weights:
-    :return:
+    :return: The simulated energy and pileup distributions
     """
     if weights and len(distribution) != len(weights):
         raise ValueError("The energy distribution and its weights must be the same length!")
 
+    if not weights:
+        choices, counts = unique([round(x) for x in distribution], return_counts=True)
+        weights = [x / sum(counts) for x in counts]
+    else:
+        choices = distribution
+
     signal = list()
     pileup = list()
-
-    choices, counts = unique([round(x) for x in distribution], return_counts=True)
-    if not weights:
-        weights = [x / sum(counts) for x in counts]
-
-    while cfg['number_of_events'] > 0:
+    while len(signal) + len(pileup) < cfg['number_of_events']:
         signal.append(random.choice(choices, 1, p=weights)[0] + uniform(0, 1))
         energy2 = random.choice(choices, 1, p=weights)[0] + uniform(0, 1)
 
         time = -log(1. - uniform(0, 1)) / cfg['event_rate']
         if time <= cfg['filter']['length'] + cfg['filter']['gap']:
             pileup.append(model(time, signal[-1], energy2, cfg))
-            cfg['number_of_events'] = cfg['number_of_events'] - 1
         else:
             signal.append(energy2)
-            cfg['number_of_events'] = cfg['number_of_events'] - 2
-    print(len(signal), len(pileup))
     return signal, pileup
 
 
 if __name__ == '__main__':
+    from random import gauss
     from pandas import DataFrame
     import matplotlib.pyplot as plt
 
@@ -235,19 +234,13 @@ if __name__ == '__main__':
         }
     }
 
-    configuration.setdefault('pileup_probability',
-                             calculate_pileup_probability(configuration['event_rate'],
-                                                          configuration['filter']['length'],
-                                                          configuration['filter']['gap']))
-
     distribution = [gauss(15, 1.5) for x in range(0, configuration['event_rate'])]
-
     signal, pileup = generate_pileups(configuration, model_xia_pixie16_filter, distribution)
 
     ax = plt.gca()
     ax.set(xlabel="Energy (arb)", ylabel='Energy (arb) / bin', title=f"Pileup simulation")
     ax.set_yscale('log')
-    bins = 50
+    bins = 800
     DataFrame(signal, columns=["signal"]).hist(bins=bins, range=[0, bins], ax=ax).flatten()[
         0].get_figure().show()
     DataFrame(pileup, columns=["pileup"]).hist(bins=bins, range=[0, bins], ax=ax,
