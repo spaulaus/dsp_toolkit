@@ -58,7 +58,6 @@ def calculate_xia_cfd(trigger_response, delay, scaling_factor):
 
 
 if __name__ == '__main__':
-    from pandas import DataFrame
     import matplotlib.pyplot as plt
     from dsp_toolbox.sample_data import sample_traces as st
     from dsp_toolbox.filtering.xia_filters import (calculate_baseline,
@@ -72,16 +71,12 @@ if __name__ == '__main__':
                                                             0.50)
     xia_trigger, xia_response = calculate_xia_cfd(trig_filter, 10, 4)
 
-    ax = plt.gca()
-    DataFrame([x - baseline for x in signal], columns=['Data']).plot(ax=ax)
-
-    DataFrame(trad_response, columns=['Trad. CFD']).plot(ax=ax)
+    plt.plot([x - baseline for x in signal], label='Data')
+    plt.plot(trad_response, label="Trad. CFD")
     plt.axvline(x=trad_trigger, color='purple', label="Trad. CFD - Trigger")
-
-    DataFrame(xia_response, columns=['XIA CFD']).plot(ax=ax)
+    plt.plot(xia_response, label="XIA CFD")
     plt.axvline(x=xia_trigger, color='yellow', label="XIA CFD - Trigger")
-
     plt.hlines(y=0, xmin=0, xmax=len(signal), colors='red', label="Zero")
-    ax.legend(loc='best')
-    ax.set_xlim([round(0.75 * trad_trigger), round(1.25 * trad_trigger)])
-    ax.get_figure().show()
+    plt.legend()
+    plt.xlim([round(0.75 * trad_trigger), round(1.25 * trad_trigger)])
+    plt.show()
