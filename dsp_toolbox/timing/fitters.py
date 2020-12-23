@@ -10,6 +10,9 @@ from scipy.optimize import curve_fit
 
 def crystal_ball(data, mu, amplitude, alpha, n, sigma):
     """
+    The Crystal Ball function is defined here: https://en.wikipedia.org/wiki/Crystal_Ball_function
+    It's really a probability density function.
+
     double t = (x[0] - mu) / sigma;
 
     if (alpha < 0)
@@ -38,6 +41,8 @@ def crystal_ball(data, mu, amplitude, alpha, n, sigma):
 
 def csi(data, phase, amplitude, n, tau):
     """
+    This function is primarily used for fitting CsI(Na) detector signals.
+
     double xprime0 = (x[0] - phase) / tau0;
     double val;
     if (x[0] < phase)
@@ -58,6 +63,9 @@ def csi(data, phase, amplitude, n, tau):
 
 def emcal(data, phase, amplitude, n, tau):
     """
+    Found this somewhere being used to fit signals from an EM Calorimeter. Can't find the origianl
+    reference anymore.
+
     double xprime = (x[0] - phase) / tau;
     double val;
     if (x[0] < phase)
@@ -78,6 +86,8 @@ def emcal(data, phase, amplitude, n, tau):
 
 def sipmt_fast(data, phase, amplitude, sigma):
     """
+    Used to fit the fast output signals from the SiPMT arrays at UTK.
+
     double diff = x[0] - phase;
     double val =
             (amp / (sigma * sqrt(2 * M_PI))) *
