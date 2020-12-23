@@ -8,6 +8,91 @@ import numpy as np
 from scipy.optimize import curve_fit
 
 
+def crystal_ball(data, mu, amplitude, alpha, n, sigma):
+    """
+    double t = (x[0] - mu) / sigma;
+
+    if (alpha < 0)
+        t = -t;
+
+    double absAlpha = fabs(alpha);
+
+    if (t >= -absAlpha) {
+        return amplitude * exp(-0.5 * t * t) + baseline_;
+    } else {
+        double a = pow(n / absAlpha, n) * exp(-0.5 * absAlpha * absAlpha);
+        double b = n / absAlpha - absAlpha;
+        return amplitude * a / pow(b - t, n) + baseline_;
+    }
+
+    :param data:
+    :param mu:
+    :param amplitude:
+    :param alpha:
+    :param n:
+    :param sigma:
+    :return:
+    """
+    pass
+
+
+def csi(data, phase, amplitude, n, tau):
+    """
+    double xprime0 = (x[0] - phase) / tau0;
+    double val;
+    if (x[0] < phase)
+        val = baseline_;
+    else
+        val = amp * pow(xprime0 / tau0, n) * exp(-xprime0) + baseline_;
+    return (val);
+
+    :param data:
+    :param phase:
+    :param amplitude:
+    :param n:
+    :param tau:
+    :return:
+    """
+    pass
+
+
+def emcal(data, phase, amplitude, n, tau):
+    """
+    double xprime = (x[0] - phase) / tau;
+    double val;
+    if (x[0] < phase)
+        val = baseline_;
+    else
+        val = amp * pow(xprime, n) * exp(-xprime) + baseline_;
+    return (val);
+
+    :param data:
+    :param phase:
+    :param amplitude:
+    :param n:
+    :param tau:
+    :return:
+    """
+    pass
+
+
+def sipmt_fast(data, phase, amplitude, sigma):
+    """
+    double diff = x[0] - phase;
+    double val =
+            (amp / (sigma * sqrt(2 * M_PI))) *
+            exp(-diff * diff / (2 * sigma * sigma)) + baseline_;
+    return (val);
+
+    :param data:
+    :param phase:
+    :param amplitude:
+    :param sigma:
+    :return:
+    """
+    pass
+
+
 def vandle(data, phase, amplitude, beta, gamma):
     """
     The standard VANDLE timing function used to fit plastic scintillator signals for high resolution
@@ -22,7 +107,7 @@ def vandle(data, phase, amplitude, beta, gamma):
     """
     return np.piecewise(data, [data < phase, data >= phase],
                         [lambda t: 0.0, lambda t: amplitude * np.exp(-beta * (t - phase)) * (
-                                    1 - np.exp(-pow(gamma * (t - phase), 4.)))])
+                                1 - np.exp(-pow(gamma * (t - phase), 4.)))])
 
 
 if __name__ == '__main__':
