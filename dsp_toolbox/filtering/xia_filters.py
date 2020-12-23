@@ -137,8 +137,7 @@ if __name__ == '__main__':
     plt.hlines(y=baseline, xmin=triggers[0] - 10, xmax=len(signal), colors='red',
                label="Baseline")
     plt.legend()
-    plt.xlabel("Bin")
-    plt.ylabel('Adc Units / Bin')
-    plt.title(f"Calculated energy: {round(energy, 2)}")
+    plt.gca().set(xlabel="Bin", ylabel='Adc Units / Bin',
+                  title=f"Calculated energy: {round(energy, 2)}")
     plt.xlim([round(0.75 * triggers[0]), len(signal)])
     plt.show()
