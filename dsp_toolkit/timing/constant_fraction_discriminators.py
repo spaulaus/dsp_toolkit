@@ -59,8 +59,8 @@ def calculate_xia_cfd(trigger_response, delay, scaling_factor):
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-    from dsp_toolbox.sample_data import sample_traces as st
-    from dsp_toolbox.filtering.xia_filters import (calculate_baseline,
+    from dsp_toolkit.sample_data import sample_traces as st
+    from dsp_toolkit.filtering.xia_filters import (calculate_baseline,
                                                    calculate_trigger_filter)
 
     signal = st.csi

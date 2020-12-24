@@ -7,7 +7,7 @@ date: December 14, 2020
 from math import exp
 from statistics import mean
 
-from dsp_toolbox.filtering.filters import calculate_trapezoidal_filter
+from dsp_toolkit.filtering.filters import calculate_trapezoidal_filter
 
 
 # TODO: Add the esums to the output!
@@ -108,7 +108,7 @@ def calculate_trigger_filter(data, length, gap, threshold):
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-    from dsp_toolbox.sample_data import sample_traces as st
+    from dsp_toolkit.sample_data import sample_traces as st
 
     signal = st.plastic_scintillator
 

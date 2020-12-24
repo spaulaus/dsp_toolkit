@@ -123,7 +123,7 @@ def vandle(data, phase, amplitude, beta, gamma):
 if __name__ == '__main__':
     from statistics import mean
     import matplotlib.pyplot as plt
-    from dsp_toolbox.sample_data.sample_traces import plastic_scintillator as ps
+    from dsp_toolkit.sample_data.sample_traces import plastic_scintillator as ps
 
     baseline = mean(ps[0:60])
     ydata = np.array([x - baseline for x in ps])
