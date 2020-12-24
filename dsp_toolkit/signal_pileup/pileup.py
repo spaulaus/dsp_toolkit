@@ -214,7 +214,6 @@ def generate_pileups(cfg, model, distribution, weights=None):
 
 if __name__ == '__main__':
     from random import gauss
-    from pandas import DataFrame
     import matplotlib.pyplot as plt
 
     # All times are expected to be in seconds.
@@ -237,11 +236,8 @@ if __name__ == '__main__':
     distribution = [gauss(100, 1) for x in range(0, configuration['event_rate'])]
     signal, pileup = generate_pileups(configuration, model_xia_pixie16_filter, distribution)
 
-    ax = plt.gca()
-    ax.set(xlabel="Energy (arb)", ylabel='Energy (arb) / bin', title=f"Pileup simulation")
-    ax.set_yscale('log')
     bins = 300
-    DataFrame(signal, columns=["signal"]).hist(bins=bins, range=[0, bins], ax=ax).flatten()[
-        0].get_figure().show()
-    DataFrame(pileup, columns=["pileup"]).hist(bins=bins, range=[0, bins], ax=ax,
-                                               alpha=0.5).flatten()[0].get_figure().show()
+    plt.hist(signal, label='signal', bins=bins, range=[0, bins])
+    plt.hist(pileup, label='pileup', bins=bins, range=[0, bins], alpha=0.5)
+    plt.gca().set(xlabel="Energy (arb)", ylabel='Energy (arb) / bin', title=f"Pileup simulation", yscale='log')
+    plt.show()
