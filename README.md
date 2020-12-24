@@ -8,7 +8,7 @@ focused around XIA's hardware and function, but can be applied to **any** digiti
 
 ## Installation
 
-`pip install dsp_toolkit`
+`pip install dsp-toolkit`
 
 ### Verify installation
 
